@@ -64,10 +64,11 @@ SPICE_VIEWER_CXXFLAGS = /MD$(____spice_viewer__DEBUGINFO_9) /DWIN32 \
 	/Fd..\..\SpiceViewer.pdb /Isrc /I$(BOOST_DIR) /GR /EHsc $(CPPFLAGS) \
 	$(CXXFLAGS)
 SPICE_VIEWER_OBJECTS =  \
-	$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_minimal.obj \
-	$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_netlist.obj
+	$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_app.obj \
+	$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_netlist.obj \
+	$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_schematic.obj
 SPICE_VIEWER_RESOURCES =  \
-	$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_minimal.res
+	$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_resources.res
 
 ### Conditionally set variables: ###
 
@@ -218,17 +219,20 @@ test_for_selected_wxbuild:
 	@if not exist $(WX_DIR)$(WXLIBPATH)\msw$(WXLIBPOSTFIX)\wx\setup.h \
 	exit 1
 
-..\..\SpiceViewer.exe: $(SPICE_VIEWER_OBJECTS) $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_minimal.res
+..\..\SpiceViewer.exe: $(SPICE_VIEWER_OBJECTS) $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_resources.res
 	link /NOLOGO /OUT:$@  /LIBPATH:$(WX_DIR)$(__WXLIBPATH_FILENAMES_2) $(WXMACHINE_FLAG) /SUBSYSTEM:WINDOWS $(____spice_viewer__DEBUGINFO_7) /pdb:"..\..\SpiceViewer.pdb" $(____spice_viewer__DEBUGINFO_11) $(LDFLAGS) @<<
 	$(SPICE_VIEWER_OBJECTS) $(SPICE_VIEWER_RESOURCES)  wxmsw$(WX_VERSION)$(WXLIBPOSTFIX)_adv.lib wxmsw$(WX_VERSION)$(WXLIBPOSTFIX)_core.lib wxbase$(WX_VERSION)$(WXLIBPOSTFIX).lib wxtiff$(WX3RDPARTYLIBPOSTFIX).lib wxjpeg$(WX3RDPARTYLIBPOSTFIX).lib wxpng$(WX3RDPARTYLIBPOSTFIX).lib wxzlib$(WX3RDPARTYLIBPOSTFIX).lib wxregex$(WXLIBPOSTFIX).lib wxexpat$(WX3RDPARTYLIBPOSTFIX).lib kernel32.lib user32.lib gdi32.lib comdlg32.lib winspool.lib winmm.lib shell32.lib comctl32.lib ole32.lib oleaut32.lib uuid.lib rpcrt4.lib advapi32.lib wsock32.lib oleacc.lib
 <<
 
-$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_minimal.obj: ..\..\src\minimal.cpp
-	$(CXX) /c /nologo /TP /Fo$@ $(SPICE_VIEWER_CXXFLAGS) ..\..\src\minimal.cpp
+$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_app.obj: ..\..\src\app.cpp
+	$(CXX) /c /nologo /TP /Fo$@ $(SPICE_VIEWER_CXXFLAGS) ..\..\src\app.cpp
 
 $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_netlist.obj: ..\..\src\netlist.cpp
 	$(CXX) /c /nologo /TP /Fo$@ $(SPICE_VIEWER_CXXFLAGS) ..\..\src\netlist.cpp
 
-$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_minimal.res: ..\..\src\minimal.rc
-	rc /fo$@  /d WIN32 $(____WX_SHARED_2_p_1) /d _UNICODE $(__WXDEBUG_DEFINE_p_1) /d __WXMSW__ /i $(WX_DIR)$(__WXLIBPATH_FILENAMES_1)\msw$(WXLIBPOSTFIX) /i $(WX_DIR)\include /d _WINDOWS $(______spice_viewer__DEBUGINFO_8_p_1) /i src /i $(BOOST_DIR) ..\..\src\minimal.rc
+$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_schematic.obj: ..\..\src\schematic.cpp
+	$(CXX) /c /nologo /TP /Fo$@ $(SPICE_VIEWER_CXXFLAGS) ..\..\src\schematic.cpp
+
+$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_resources.res: ..\..\src\resources.rc
+	rc /fo$@  /d WIN32 $(____WX_SHARED_2_p_1) /d _UNICODE $(__WXDEBUG_DEFINE_p_1) /d __WXMSW__ /i $(WX_DIR)$(__WXLIBPATH_FILENAMES_1)\msw$(WXLIBPOSTFIX) /i $(WX_DIR)\include /d _WINDOWS $(______spice_viewer__DEBUGINFO_8_p_1) /i src /i $(BOOST_DIR) ..\..\src\resources.rc
 

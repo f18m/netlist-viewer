@@ -41,7 +41,7 @@
     
         <sources>$(fileList('src/*.cpp'))</sources>
         <headers>$(fileList('src/*.h'))</headers>
-        <win32-res>src/minimal.rc</win32-res>
+        <win32-res>src/resources.rc</win32-res>
         
         <wx-lib>adv</wx-lib>
         <wx-lib>core</wx-lib>
