@@ -135,8 +135,9 @@ SPICE_VIEWER_CXXFLAGS = $(____WX_SHARED_0_p) -d_UNICODE $(__WXDEBUG_DEFINE_p) &
 	$(____spice_viewer__DEBUGINFO_3) -i=src -i=$(BOOST_DIR) $(CPPFLAGS) &
 	$(CXXFLAGS)
 SPICE_VIEWER_OBJECTS =  &
-	$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_minimal.obj &
-	$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_netlist.obj
+	$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_app.obj &
+	$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_netlist.obj &
+	$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_schematic.obj
 
 
 all : $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)
@@ -167,7 +168,7 @@ test_for_selected_wxbuild :
 	@if not exist $(WX_DIR)$(WXLIBPATH)\msw$(WXLIBPOSTFIX)\wx\setup.h \
 	exit 1
 
-..\..\SpiceViewer.exe :  $(SPICE_VIEWER_OBJECTS) $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_minimal.res
+..\..\SpiceViewer.exe :  $(SPICE_VIEWER_OBJECTS) $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_resources.res
 	@%create $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer.lbc
 	@%append $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer.lbc option quiet
 	@%append $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer.lbc name $^@
@@ -175,16 +176,19 @@ test_for_selected_wxbuild :
 	@%append $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer.lbc  libpath $(WX_DIR)$(WXLIBPATH)  system nt_win ref '_WinMain@16' $(____spice_viewer__DEBUGINFO_4) $(LDFLAGS)
 	@for %i in ($(SPICE_VIEWER_OBJECTS)) do @%append $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer.lbc file %i
 	@for %i in ( wxmsw$(WX_VERSION)$(WXLIBPOSTFIX)_adv.lib wxmsw$(WX_VERSION)$(WXLIBPOSTFIX)_core.lib wxbase$(WX_VERSION)$(WXLIBPOSTFIX).lib wxtiff$(WX3RDPARTYLIBPOSTFIX).lib wxjpeg$(WX3RDPARTYLIBPOSTFIX).lib wxpng$(WX3RDPARTYLIBPOSTFIX).lib wxzlib$(WX3RDPARTYLIBPOSTFIX).lib wxregex$(WXLIBPOSTFIX).lib wxexpat$(WX3RDPARTYLIBPOSTFIX).lib kernel32.lib user32.lib gdi32.lib comdlg32.lib winspool.lib winmm.lib shell32.lib comctl32.lib ole32.lib oleaut32.lib uuid.lib rpcrt4.lib advapi32.lib wsock32.lib) do @%append $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer.lbc library %i
-	@%append $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer.lbc option resource=$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_minimal.res
+	@%append $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer.lbc option resource=$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_resources.res
 	@for %i in () do @%append $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer.lbc option stack=%i
 	wlink @$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer.lbc
 
-$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_minimal.obj :  .AUTODEPEND ..\..\src\minimal.cpp
+$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_app.obj :  .AUTODEPEND ..\..\src\app.cpp
 	$(CXX) -bt=nt -zq -fo=$^@ $(SPICE_VIEWER_CXXFLAGS) $<
 
 $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_netlist.obj :  .AUTODEPEND ..\..\src\netlist.cpp
 	$(CXX) -bt=nt -zq -fo=$^@ $(SPICE_VIEWER_CXXFLAGS) $<
 
-$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_minimal.res :  .AUTODEPEND ..\..\src\minimal.rc
+$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_schematic.obj :  .AUTODEPEND ..\..\src\schematic.cpp
+	$(CXX) -bt=nt -zq -fo=$^@ $(SPICE_VIEWER_CXXFLAGS) $<
+
+$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_resources.res :  .AUTODEPEND ..\..\src\resources.rc
 	wrc -q -ad -bt=nt -r -fo=$^@  $(____WX_SHARED_0_p) -d_UNICODE $(__WXDEBUG_DEFINE_p) -d__WXMSW__ -i=$(WX_DIR)$(WXLIBPATH)\msw$(WXLIBPOSTFIX) -i=$(WX_DIR)\include -i=src -i=$(BOOST_DIR) $<
 

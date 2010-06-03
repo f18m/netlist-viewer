@@ -1,5 +1,5 @@
 /////////////////////////////////////////////////////////////////////////////
-// Name:        minimal.cpp
+// Name:        app.cpp
 // Purpose:     Spice Viewer application entry point
 // Author:      Francesco Montorsi
 // Created:     28/05/2010
@@ -44,7 +44,7 @@
 // the application icon (under Windows and OS/2 it is in resources and even
 // though we could still include the XPM here it would be unused)
 #if !defined(__WXMSW__) && !defined(__WXPM__)
-    #include "sample.xpm"
+    #include "icon.xpm"
 #endif
 
 // ----------------------------------------------------------------------------
@@ -185,7 +185,7 @@ SpiceViewerFrame::SpiceViewerFrame(const wxString& title)
                             : wxFrame(NULL, wxID_ANY, title)
 {
     // set the frame icon
-    SetIcon(wxICON(sample));
+    SetIcon(wxICON(appicon));
 
     // create a menu bar
     wxMenu *fileMenu = new wxMenu;
@@ -280,7 +280,7 @@ void SpiceViewerFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
     aboutInfo.SetVersion(SV_VERSION_STR);
     aboutInfo.SetDescription(_("SPICE netlist viewer. This program converts a SPICE text netlist to a graphical schematic."));
     aboutInfo.SetCopyright("(C) 2010");
-    aboutInfo.SetWebSite("http://???");
+    aboutInfo.SetWebSite("https://sourceforge.net/projects/netlistviewer");
     aboutInfo.AddDeveloper("Francesco Montorsi");
 
     wxAboutBox(aboutInfo);

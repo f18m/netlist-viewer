@@ -79,8 +79,9 @@ SPICE_VIEWER_CXXFLAGS = -I$(BCCDIR)\include $(____WX_SHARED_0_p) -D_UNICODE \
 	$(____spice_viewer__OPT_3) $(____spice_viewer__DEBUGINFO) -Isrc \
 	-I$(BOOST_DIR) $(CPPFLAGS) $(CXXFLAGS)
 SPICE_VIEWER_OBJECTS =  \
-	$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_minimal.obj \
-	$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_netlist.obj
+	$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_app.obj \
+	$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_netlist.obj \
+	$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_schematic.obj
 
 ### Conditionally set variables: ###
 
@@ -168,17 +169,20 @@ test_for_selected_wxbuild:
 	@if not exist $(WX_DIR)$(WXLIBPATH)\msw$(WXLIBPOSTFIX)\wx\setup.h \
 	exit 1
 
-..\..\SpiceViewer.exe: $(SPICE_VIEWER_OBJECTS)  $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_minimal.res
+..\..\SpiceViewer.exe: $(SPICE_VIEWER_OBJECTS)  $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_resources.res
 	ilink32 -Tpe -q  -L$(BCCDIR)\lib -L$(BCCDIR)\lib\psdk -L$(WX_DIR)$(WXLIBPATH)  -aa $(____spice_viewer__DEBUGINFO) $(LDFLAGS) @&&|
-	c0w32.obj $(SPICE_VIEWER_OBJECTS),$@,, wxmsw$(WX_VERSION)$(WXLIBPOSTFIX)_adv.lib wxmsw$(WX_VERSION)$(WXLIBPOSTFIX)_core.lib wxbase$(WX_VERSION)$(WXLIBPOSTFIX).lib wxtiff$(WX3RDPARTYLIBPOSTFIX).lib wxjpeg$(WX3RDPARTYLIBPOSTFIX).lib wxpng$(WX3RDPARTYLIBPOSTFIX).lib wxzlib$(WX3RDPARTYLIBPOSTFIX).lib wxregex$(WXLIBPOSTFIX).lib wxexpat$(WX3RDPARTYLIBPOSTFIX).lib ole2w32.lib oleacc.lib import32.lib cw32.lib,, $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_minimal.res
+	c0w32.obj $(SPICE_VIEWER_OBJECTS),$@,, wxmsw$(WX_VERSION)$(WXLIBPOSTFIX)_adv.lib wxmsw$(WX_VERSION)$(WXLIBPOSTFIX)_core.lib wxbase$(WX_VERSION)$(WXLIBPOSTFIX).lib wxtiff$(WX3RDPARTYLIBPOSTFIX).lib wxjpeg$(WX3RDPARTYLIBPOSTFIX).lib wxpng$(WX3RDPARTYLIBPOSTFIX).lib wxzlib$(WX3RDPARTYLIBPOSTFIX).lib wxregex$(WXLIBPOSTFIX).lib wxexpat$(WX3RDPARTYLIBPOSTFIX).lib ole2w32.lib oleacc.lib import32.lib cw32.lib,, $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_resources.res
 |
 
-$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_minimal.obj: ..\..\src\minimal.cpp
-	$(CXX) -q -c -P -o$@ $(SPICE_VIEWER_CXXFLAGS) ..\..\src\minimal.cpp
+$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_app.obj: ..\..\src\app.cpp
+	$(CXX) -q -c -P -o$@ $(SPICE_VIEWER_CXXFLAGS) ..\..\src\app.cpp
 
 $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_netlist.obj: ..\..\src\netlist.cpp
 	$(CXX) -q -c -P -o$@ $(SPICE_VIEWER_CXXFLAGS) ..\..\src\netlist.cpp
 
-$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_minimal.res: ..\..\src\minimal.rc
-	brcc32 -32 -r -fo$@ -i$(BCCDIR)\include  $(____WX_SHARED_0_p_1) -d_UNICODE $(__WXDEBUG_DEFINE_p_1) -d__WXMSW__ -i$(WX_DIR)$(WXLIBPATH)\msw$(WXLIBPOSTFIX) -i$(WX_DIR)\include -isrc -i$(BOOST_DIR) ..\..\src\minimal.rc
+$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_schematic.obj: ..\..\src\schematic.cpp
+	$(CXX) -q -c -P -o$@ $(SPICE_VIEWER_CXXFLAGS) ..\..\src\schematic.cpp
+
+$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_resources.res: ..\..\src\resources.rc
+	brcc32 -32 -r -fo$@ -i$(BCCDIR)\include  $(____WX_SHARED_0_p_1) -d_UNICODE $(__WXDEBUG_DEFINE_p_1) -d__WXMSW__ -i$(WX_DIR)$(WXLIBPATH)\msw$(WXLIBPOSTFIX) -i$(WX_DIR)\include -isrc -i$(BOOST_DIR) ..\..\src\resources.rc
 
