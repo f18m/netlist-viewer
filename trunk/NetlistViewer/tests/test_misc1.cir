@@ -1,0 +1,9 @@
+.SUBCKT test_misc1 IN OUT
+
+V1 0 IN DC=4V
+R1 IN 2 
+Q1 3 2 0 NPNstd
+M1 OUT 3 0 NMOSstd
+
+.ENDS
+
