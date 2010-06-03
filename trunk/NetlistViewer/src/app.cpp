@@ -32,8 +32,11 @@
 #include <wx/aboutdlg.h>
 #include <boost/graph/kamada_kawai_spring_layout.hpp>
 #include <boost/graph/circle_layout.hpp>
-
 #include "netlist.h"
+
+// ----------------------------------------------------------------------------
+// constants
+// ----------------------------------------------------------------------------
 
 #define SV_VERSION_STR         "1.0"
 
@@ -59,6 +62,26 @@ public:
     virtual int OnExit();
 };
 
+// define a scrollable canvas for displaying the schematic
+class SpiceViewerCanvas: public wxScrolledWindow
+{
+public:
+    SpiceViewerCanvas(wxFrame *parent);
+
+    void OnPaint(wxPaintEvent &event);
+    void OnMouseMove(wxMouseEvent &event);
+    void OnMouseDown(wxMouseEvent &event);
+    void OnMouseUp(wxMouseEvent &event);
+
+    void SetCircuit(const svCircuit& ckt)
+        { m_ckt = ckt; }
+
+private:
+    svCircuit m_ckt;
+
+    DECLARE_EVENT_TABLE()
+};
+
 // main application frame
 class SpiceViewerFrame : public wxFrame
 {
@@ -71,23 +94,11 @@ public:
     void OnAbout(wxCommandEvent& event);
 
 private:
+    SpiceViewerCanvas* m_canvas;
+
     DECLARE_EVENT_TABLE()
 };
 
-// define a scrollable canvas for drawing onto
-class SpiceViewerCanvas: public wxScrolledWindow
-{
-public:
-    SpiceViewerCanvas(wxFrame *parent);
-
-    void OnPaint(wxPaintEvent &event);
-    /*void OnMouseMove(wxMouseEvent &event);
-    void OnMouseDown(wxMouseEvent &event);
-    void OnMouseUp(wxMouseEvent &event);*/
-
-private:
-    DECLARE_EVENT_TABLE()
-};
 
 // ----------------------------------------------------------------------------
 // constants
@@ -210,7 +221,9 @@ SpiceViewerFrame::SpiceViewerFrame(const wxString& title)
     SetStatusText("Welcome to SPICE netlist viewer " SV_VERSION_STR "!");
 
     // create the main canvas of this application
-    new SpiceViewerCanvas(this);
+    // (it will get automatically linked to this frame and its size will be
+    //  adjusted to fill the entire window)
+    m_canvas = new SpiceViewerCanvas(this);
 }
 
 
@@ -218,12 +231,10 @@ SpiceViewerFrame::SpiceViewerFrame(const wxString& title)
 // main frame - event handlers
 // ----------------------------------------------------------------------------
 
-    svSubcktArray subcktArray; 
-
 void SpiceViewerFrame::OnOpen(wxCommandEvent& WXUNUSED(event))
 {
     wxFileDialog 
-        openFileDialog(this, _("Open SPICE netlist"), "", "",
+        openFileDialog(this, "Open SPICE netlist", "", "",
                        "SPICE netlists (*.net;*.cir)|*.net;*.cir", wxFD_OPEN|wxFD_FILE_MUST_EXIST);
 
     if (openFileDialog.ShowModal() == wxID_CANCEL)
@@ -231,6 +242,7 @@ void SpiceViewerFrame::OnOpen(wxCommandEvent& WXUNUSED(event))
     
     // proceed loading the file chosen by the user:
     svParser parser;
+    svCircuitArray subcktArray; 
     if (!parser.load(subcktArray, openFileDialog.GetPath().ToStdString()))
     {
         wxLogError("Error while parsing the netlist file '%s'", openFileDialog.GetPath());
@@ -266,6 +278,8 @@ void SpiceViewerFrame::OnOpen(wxCommandEvent& WXUNUSED(event))
     subcktArray[0].buildSchematic();
 #endif
 
+    m_canvas->SetCircuit(subcktArray[0]);
+
     Refresh();
 }
 
@@ -279,7 +293,7 @@ void SpiceViewerFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
     wxAboutDialogInfo aboutInfo;
     aboutInfo.SetName("Netlist Viewer");
     aboutInfo.SetVersion(SV_VERSION_STR);
-    aboutInfo.SetDescription(_("SPICE netlist viewer. This program converts a SPICE text netlist to a graphical schematic."));
+    aboutInfo.SetDescription("SPICE netlist viewer. This program converts a SPICE text netlist to a graphical schematic.");
     aboutInfo.SetCopyright("(C) 2010");
     aboutInfo.SetWebSite("https://sourceforge.net/projects/netlistviewer");
     aboutInfo.AddDeveloper("Francesco Montorsi");
@@ -293,9 +307,10 @@ void SpiceViewerFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
 
 BEGIN_EVENT_TABLE(SpiceViewerCanvas, wxScrolledWindow)
     EVT_PAINT(SpiceViewerCanvas::OnPaint)
-    /*EVT_MOTION(MyCanvas::OnMouseMove)
-    EVT_LEFT_DOWN(MyCanvas::OnMouseDown)
-    EVT_LEFT_UP(MyCanvas::OnMouseUp)*/
+
+    EVT_MOTION(SpiceViewerCanvas::OnMouseMove)
+    EVT_LEFT_DOWN(SpiceViewerCanvas::OnMouseDown)
+    EVT_LEFT_UP(SpiceViewerCanvas::OnMouseUp)
 END_EVENT_TABLE()
 
 SpiceViewerCanvas::SpiceViewerCanvas(wxFrame *parent)
@@ -308,15 +323,26 @@ void SpiceViewerCanvas::OnPaint(wxPaintEvent &WXUNUSED(event))
 {
     wxPaintDC pdc(this);
     PrepareDC(pdc);
-    //m_owner->PrepareDC(dc);
 
+    // clear our background
     pdc.SetBackground(*wxWHITE_BRUSH);
     pdc.SetBackgroundMode(wxSOLID);
     pdc.Clear();
 
-    if (subcktArray.size() > 0)
-        subcktArray[0].draw(pdc);
+    // draw the schematic currently loaded
+    m_ckt.draw(pdc);
 }
 
+void SpiceViewerCanvas::OnMouseMove(wxMouseEvent &event)
+{
+}
+
+void SpiceViewerCanvas::OnMouseDown(wxMouseEvent &event)
+{
+}
+
+void SpiceViewerCanvas::OnMouseUp(wxMouseEvent &event)
+{
+}
 
 
