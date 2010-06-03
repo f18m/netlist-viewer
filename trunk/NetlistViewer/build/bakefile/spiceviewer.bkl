@@ -1,0 +1,51 @@
+<?xml version="1.0" ?>
+<!-- $Id$ -->
+
+<makefile>
+
+
+    <!--                                                            -->
+    <!--                     GLOBAL SETTINGS                        -->
+    <!--                                                            -->
+    
+    <requires version="0.2.8"/>
+
+    <set var="WX_VERSION_DEFAULT">29</set>      <!-- required for many features -->
+    <set var="WX_UNICODE">1</set>               <!-- wx29 is always built in Unicode mode -->
+    <set var="WX_MONOLITHIC">0</set>            <!-- we never want to link against a huge wx lib -->
+
+    <include file="presets/wx.bkl"/>
+    
+    <set-srcdir>../..</set-srcdir>
+    <set-wxlike-builddir/>
+
+    <!-- The directory where Boost is installed: -->
+    <option name="BOOST_DIR" category="path" never_empty="1">
+        <default-value>$(DOLLAR)(BOOST_DIR)</default-value>
+        <description>
+            The directory where Boost library is installed
+        </description>
+    </option>
+    
+    
+    <!--                                                            -->
+    <!--                      SPICE VIEWER                          -->
+    <!--                                                            -->
+    
+    <exe id="spice_viewer" template="wxgui,wxlike">
+        <exename>SpiceViewer</exename>
+        <dirname>../..</dirname>
+    
+        <include>src</include>
+        <include>$(BOOST_DIR)</include>
+    
+        <sources>$(fileList('src/*.cpp'))</sources>
+        <headers>$(fileList('src/*.h'))</headers>
+        <win32-res>src/minimal.rc</win32-res>
+        
+        <wx-lib>adv</wx-lib>
+        <wx-lib>core</wx-lib>
+        <wx-lib>base</wx-lib>
+    </exe>
+
+</makefile>

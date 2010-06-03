@@ -1,0 +1,26 @@
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "spice_viewer", "spice_viewer.vcproj", "{086742E8-F93A-55FE-A43E-2EF29252E722}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Static Release|Win32 = Static Release|Win32
+		Static Debug|Win32 = Static Debug|Win32
+		DLL Release|Win32 = DLL Release|Win32
+		DLL Debug|Win32 = DLL Debug|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{086742E8-F93A-55FE-A43E-2EF29252E722}.Static Release|Win32.ActiveCfg = Static Release|Win32
+		{086742E8-F93A-55FE-A43E-2EF29252E722}.Static Release|Win32.Build.0 = Static Release|Win32
+		{086742E8-F93A-55FE-A43E-2EF29252E722}.Static Debug|Win32.ActiveCfg = Static Debug|Win32
+		{086742E8-F93A-55FE-A43E-2EF29252E722}.Static Debug|Win32.Build.0 = Static Debug|Win32
+		{086742E8-F93A-55FE-A43E-2EF29252E722}.DLL Release|Win32.ActiveCfg = DLL Release|Win32
+		{086742E8-F93A-55FE-A43E-2EF29252E722}.DLL Release|Win32.Build.0 = DLL Release|Win32
+		{086742E8-F93A-55FE-A43E-2EF29252E722}.DLL Debug|Win32.ActiveCfg = DLL Debug|Win32
+		{086742E8-F93A-55FE-A43E-2EF29252E722}.DLL Debug|Win32.Build.0 = DLL Debug|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
+
