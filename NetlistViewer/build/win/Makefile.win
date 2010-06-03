@@ -1,0 +1,73 @@
+# Project: usbpicprog
+# Compiler: Default GCC compiler
+# Compiler Type: MingW 3
+# Makefile created by wxDev-C++ 7.0 on 10/02/10 16:17
+
+CPP       = g++.exe
+CC        = gcc.exe
+WINDRES   = "windres.exe"
+OBJ       = Objects/MingW/hardware.o Objects/MingW/main.o Objects/MingW/pictype.o Objects/MingW/uppmainwindow_base.o Objects/MingW/uppmainwindow.o Objects/MingW/hexview.o Objects/MingW/preferences.o Objects/MingW/hexfile.o Objects/MingW/configview.o Objects/MingW/packageview.o Objects/MingW/preferences_base.o Objects/MingW/io_test.o Objects/MingW/io_test_base.o Objects/MingW/usbpicprog_private.res
+LINKOBJ   = Objects/MingW/hardware.o Objects/MingW/main.o Objects/MingW/pictype.o Objects/MingW/uppmainwindow_base.o Objects/MingW/uppmainwindow.o Objects/MingW/hexview.o Objects/MingW/preferences.o Objects/MingW/hexfile.o Objects/MingW/configview.o Objects/MingW/packageview.o Objects/MingW/preferences_base.o Objects/MingW/io_test.o Objects/MingW/io_test_base.o Objects/MingW/usbpicprog_private.res
+LIBS      = -L"C:/Program Files/Dev-Cpp/Lib" -L"C:/Program Files/Dev-Cpp/wxWidgets-2.9.0-msw-static/lib" -mwindows  -lwx_mswu_xrc-2.9 -lwx_mswu_html-2.9 -lwx_mswu_qa-2.9 -lwx_mswu_adv-2.9 -lwx_mswu_core-2.9 -lwx_baseu_xml-2.9 -lwx_baseu_net-2.9 -lwx_baseu-2.9 -lwxregexu-2.9  -lwxexpat-2.9  -lwxtiff-2.9  -lwxjpeg-2.9  -lwxpng-2.9  -lwxzlib-2.9  -lrpcrt4  -loleaut32  -lole32  -luuid  -lwinspool  -lwinmm  -lshell32  -lcomctl32  -lcomdlg32  -lctl3d32  -ladvapi32  -lwsock32  -lgdi32   -lsetupapi c:/usbpicprog/trunk/upp_wx/libusb1_win32/pthreadGC2.dll c:/usbpicprog/trunk/upp_wx/libusb1_win32/libusb-1.dll  -g3 
+INCS      = -I"C:/Program Files/Dev-Cpp/Include" -I"C:/Program Files/Dev-Cpp/wxWidgets-2.9.0-msw-static/include/wx" -I"C:/Program Files/Dev-Cpp/wxWidgets-2.9.0-msw-static/lib/wx/include/msw-unicode-release-static-2.9" -I"C:/usbpicprog/trunk/upp_wx/libusb1_win32"
+CXXINCS   = -I"C:/Program Files/Dev-Cpp/lib/gcc/mingw32/3.4.5/include" -I"C:/Program Files/Dev-Cpp/include/c++/3.4.5/backward" -I"C:/Program Files/Dev-Cpp/include/c++/3.4.5/mingw32" -I"C:/Program Files/Dev-Cpp/include/c++/3.4.5" -I"C:/Program Files/Dev-Cpp/include" -I"C:/Program Files/Dev-Cpp/" -I"C:/Program Files/Dev-Cpp/include/common/wx/msw" -I"C:/Program Files/Dev-Cpp/include/common/wx/generic" -I"C:/Program Files/Dev-Cpp/include/common/wx/html" -I"C:/Program Files/Dev-Cpp/include/common/wx/protocol" -I"C:/Program Files/Dev-Cpp/include/common/wx/xml" -I"C:/Program Files/Dev-Cpp/include/common/wx/xrc" -I"C:/Program Files/Dev-Cpp/include/common/wx" -I"C:/Program Files/Dev-Cpp/include/common" -I"C:/Program Files/Dev-Cpp/wxWidgets-2.9.0-msw-static/include/wx" -I"C:/Program Files/Dev-Cpp/wxWidgets-2.9.0-msw-static/lib/wx/include/msw-unicode-release-static-2.9" -I"C:/usbpicprog/trunk/upp_wx/libusb1_win32"
+RCINCS    = --include-dir "C:/PROGRA~1/Dev-Cpp/include/common"
+BIN       = Output/MingW/usbpicprog.exe
+DEFINES   = -D__WXMSW__ -D__GNUWIN32__ -D__WIN95__
+CXXFLAGS  = $(CXXINCS) $(DEFINES) -fno-exceptions -fno-pcc-struct-return -fstrict-aliasing -Wall -D__WXMSW__ -D__GNUWIN32__ -D__WIN95__   -fexpensive-optimizations -O3 -g3
+CFLAGS    = $(INCS) $(DEFINES) -fno-exceptions -fno-pcc-struct-return -fstrict-aliasing -Wall -D__WXMSW__ -D__GNUWIN32__ -D__WIN95__   -fexpensive-optimizations -O3 -g3
+GPROF     = gprof.exe
+RM        = rm -f
+WXLIBNAME = wxmsw28
+LINK      = g++.exe
+
+.PHONY: all all-before all-after clean clean-custom
+all: all-before $(BIN) all-after
+
+clean: clean-custom
+	$(RM) $(OBJ) $(BIN)
+
+$(BIN): $(OBJ)
+	$(LINK) $(LINKOBJ) -o "Output\MingW\usbpicprog.exe" $(LIBS) 
+
+Objects/MingW/hardware.o: $(GLOBALDEPS) src/hardware.cpp
+	$(CPP) -c src/hardware.cpp -o Objects/MingW/hardware.o $(CXXFLAGS)
+
+Objects/MingW/main.o: $(GLOBALDEPS) src/main.cpp
+	$(CPP) -c src/main.cpp -o Objects/MingW/main.o $(CXXFLAGS)
+
+Objects/MingW/pictype.o: $(GLOBALDEPS) src/pictype.cpp
+	$(CPP) -c src/pictype.cpp -o Objects/MingW/pictype.o $(CXXFLAGS)
+
+Objects/MingW/uppmainwindow_base.o: $(GLOBALDEPS) src/uppmainwindow_base.cpp
+	$(CPP) -c src/uppmainwindow_base.cpp -o Objects/MingW/uppmainwindow_base.o $(CXXFLAGS)
+
+Objects/MingW/uppmainwindow.o: $(GLOBALDEPS) src/uppmainwindow.cpp
+	$(CPP) -c src/uppmainwindow.cpp -o Objects/MingW/uppmainwindow.o $(CXXFLAGS)
+
+Objects/MingW/hexview.o: $(GLOBALDEPS) src/hexview.cpp
+	$(CPP) -c src/hexview.cpp -o Objects/MingW/hexview.o $(CXXFLAGS)
+
+Objects/MingW/preferences.o: $(GLOBALDEPS) src/preferences.cpp
+	$(CPP) -c src/preferences.cpp -o Objects/MingW/preferences.o $(CXXFLAGS)
+
+Objects/MingW/hexfile.o: $(GLOBALDEPS) src/hexfile.cpp
+	$(CPP) -c src/hexfile.cpp -o Objects/MingW/hexfile.o $(CXXFLAGS)
+
+Objects/MingW/configview.o: $(GLOBALDEPS) src/configview.cpp
+	$(CPP) -c src/configview.cpp -o Objects/MingW/configview.o $(CXXFLAGS)
+
+Objects/MingW/packageview.o: $(GLOBALDEPS) src/packageview.cpp
+	$(CPP) -c src/packageview.cpp -o Objects/MingW/packageview.o $(CXXFLAGS)
+
+Objects/MingW/preferences_base.o: $(GLOBALDEPS) src/preferences_base.cpp
+	$(CPP) -c src/preferences_base.cpp -o Objects/MingW/preferences_base.o $(CXXFLAGS)
+
+Objects/MingW/io_test.o: $(GLOBALDEPS) src/io_test.cpp
+	$(CPP) -c src/io_test.cpp -o Objects/MingW/io_test.o $(CXXFLAGS)
+
+Objects/MingW/io_test_base.o: $(GLOBALDEPS) src/io_test_base.cpp
+	$(CPP) -c src/io_test_base.cpp -o Objects/MingW/io_test_base.o $(CXXFLAGS)
+
+Objects/MingW/usbpicprog_private.res: Objects/MingW/usbpicprog_private.rc 
+	$(WINDRES) --input-format=rc -o Objects/MingW/usbpicprog_private.res $(RCINCS) Objects/MingW/USBPIC~1.RC -O coff
