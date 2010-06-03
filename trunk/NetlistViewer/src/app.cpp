@@ -209,6 +209,7 @@ SpiceViewerFrame::SpiceViewerFrame(const wxString& title)
     CreateStatusBar(1);
     SetStatusText("Welcome to SPICE netlist viewer " SV_VERSION_STR "!");
 
+    // create the main canvas of this application
     new SpiceViewerCanvas(this);
 }
 
@@ -276,7 +277,7 @@ void SpiceViewerFrame::OnQuit(wxCommandEvent& WXUNUSED(event))
 void SpiceViewerFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
 {
     wxAboutDialogInfo aboutInfo;
-    aboutInfo.SetName("Spice Viewer");
+    aboutInfo.SetName("Netlist Viewer");
     aboutInfo.SetVersion(SV_VERSION_STR);
     aboutInfo.SetDescription(_("SPICE netlist viewer. This program converts a SPICE text netlist to a graphical schematic."));
     aboutInfo.SetCopyright("(C) 2010");

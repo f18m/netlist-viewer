@@ -1,5 +1,5 @@
 /* XPM */
-static char *icon[] = {
+static const char *appicon_xpm[] = {
 /* columns rows colors chars-per-pixel */
 "48 48 49 1",
 "  c #000000",
