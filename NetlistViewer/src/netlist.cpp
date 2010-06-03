@@ -208,7 +208,7 @@ bool svString::getValue(double *res) const
     return true;
 }
 
-bool svParser::loadSubCkt(svSubckt& ret, const wxArrayString& lines, size_t startIdx, size_t endIdx)
+bool svParser::loadSubCkt(svCircuit& ret, const wxArrayString& lines, size_t startIdx, size_t endIdx)
 {
     for (size_t i=startIdx; i<endIdx; i++)
     {
@@ -266,7 +266,7 @@ bool svParser::loadSubCkt(svSubckt& ret, const wxArrayString& lines, size_t star
     return true;
 }
 
-bool svParser::load(svSubcktArray& ret, const std::string& filename)
+bool svParser::load(svCircuitArray& ret, const std::string& filename)
 {
     wxFileInputStream input_stream(filename);
     if (!input_stream.IsOk())
@@ -327,7 +327,7 @@ bool svParser::load(svSubcktArray& ret, const std::string& filename)
             }
 
             // parse the subcircuit we just found
-            svSubckt sub(strtemp.BeforeFirst(' ').ToStdString());
+            svCircuit sub(strtemp.BeforeFirst(' ').ToStdString());
             if (!loadSubCkt(sub, toparse, startIdx, (size_t)endIdx))
                 return false;
 
@@ -338,7 +338,7 @@ bool svParser::load(svSubcktArray& ret, const std::string& filename)
     return true;
 }
 
-svUGraph svSubckt::buildGraph() const
+svUGraph svCircuit::buildGraph() const
 {
     if (m_nodes.empty())
         return svUGraph(0);
@@ -380,27 +380,18 @@ svUGraph svSubckt::buildGraph() const
     return ug;
 }
 
-svSchematic svSubckt::buildSchematic() const
+svSchematic svCircuit::buildSchematic() const
 {
     svSchematic ret;
 
     return ret;
 }
 
-void svSubckt::draw(wxDC& dc) const
+void svCircuit::draw(wxDC& dc) const
 {
-/*    class svGridPosition
-    {
-        int x;
-        int y;
+    if (m_devices.size() == 0)
+        return;
 
-    public:
-        svGridPosition(int xx, int yy) 
-            { x=xx; y=yy; }
-    };
-
-    std::vector<svGridPosition> m_devicesPos;
-*/
     std::vector<wxPoint> m_devicesPos;
 
     // start placing the first device at the center of our virtual grid
