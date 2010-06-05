@@ -4,6 +4,7 @@ V1 0 IN DC=4V
 R1 IN 2 
 Q1 3 2 0 NPNstd
 M1 OUT 3 0 NMOSstd
+D1 OUT 0 DIODEstd
 
 .ENDS
 

@@ -1,0 +1,11 @@
+.SUBCKT test_sources
+
+I1 0 n1 DC=10
+V1 0 n2 DC=10
+E1 0 n1 n1 n2 0.5
+G1 0 n1 n1 n2 0.5
+** F1 0 n1 I1 10
+** H1 0 n1 V1 10
+
+.ENDS
+
