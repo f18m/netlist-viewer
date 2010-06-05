@@ -26,6 +26,9 @@
 
 #include <algorithm>
 
+#include <boost/graph/kamada_kawai_spring_layout.hpp>
+#include <boost/graph/circle_layout.hpp>
+
 #include "netlist.h"
 
 
@@ -45,6 +48,7 @@
  
 svBaseDeviceArray svDeviceFactory::s_registered;
 wxPoint svInvalidPoint = wxPoint(-1e10, -1e10);
+svNode svGroundNode = svNode("0");      // SPICE conventional name for GND
 
 #define ALLOWED_CHARS       "0123456789.+-"
 
@@ -78,7 +82,7 @@ struct {
 };
 
 // ----------------------------------------------------------------------------
-// classes
+// svString
 // ----------------------------------------------------------------------------
 
 bool svString::startsWithOneOf(const std::string& str, unsigned int* len) const
@@ -208,8 +212,14 @@ bool svString::getValue(double *res) const
     return true;
 }
 
-bool svParser::loadSubCkt(svCircuit& ret, const wxArrayString& lines, size_t startIdx, size_t endIdx)
+// ----------------------------------------------------------------------------
+// svCircuit
+// ----------------------------------------------------------------------------
+
+bool svCircuit::parseSPICESubCkt(const wxArrayString& lines, size_t startIdx, size_t endIdx)
 {
+    release();
+
     for (size_t i=startIdx; i<endIdx; i++)
     {
         wxLogDebug(lines[i]);
@@ -244,7 +254,7 @@ bool svParser::loadSubCkt(svCircuit& ret, const wxArrayString& lines, size_t sta
 
         for (size_t j=0; j<dev->getNodesCount(); j++)
         {
-            ret.addNode(arr[0].ToStdString());
+            addNode(arr[0].ToStdString());
             dev->addNode(arr[0].ToStdString());
 
             arr.erase(arr.begin());     // this node has been processed; remove it
@@ -253,20 +263,24 @@ bool svParser::loadSubCkt(svCircuit& ret, const wxArrayString& lines, size_t sta
         for (size_t j=0; j<arr.size(); j++)
         {
             // there are additional properties device-specific:
-            if (!dev->parseProperty(j, arr[j].ToStdString()))
+            if (!dev->parseSPICEProperty(j, arr[j].ToStdString()))
             {
                 wxLogError("Error parsing argument '%s' of line %d: '%s'", arr[j], i, lines[i]);
                 return false;
             }
         }
 
-        ret.addDevice(dev);
+        addDevice(dev);
     }
 
     return true;
 }
 
-bool svParser::load(svCircuitArray& ret, const std::string& filename)
+// ----------------------------------------------------------------------------
+// svParserSPICE
+// ----------------------------------------------------------------------------
+
+bool svParserSPICE::load(svCircuitArray& ret, const std::string& filename)
 {
     wxFileInputStream input_stream(filename);
     if (!input_stream.IsOk())
@@ -328,7 +342,7 @@ bool svParser::load(svCircuitArray& ret, const std::string& filename)
 
             // parse the subcircuit we just found
             svCircuit sub(strtemp.BeforeFirst(' ').ToStdString());
-            if (!loadSubCkt(sub, toparse, startIdx, (size_t)endIdx))
+            if (!sub.parseSPICESubCkt(toparse, startIdx, (size_t)endIdx))
                 return false;
 
             ret.push_back(sub);
@@ -337,6 +351,10 @@ bool svParser::load(svCircuitArray& ret, const std::string& filename)
 
     return true;
 }
+
+// ----------------------------------------------------------------------------
+// svCircuit
+// ----------------------------------------------------------------------------
 
 svUGraph svCircuit::buildGraph() const
 {
@@ -349,7 +367,7 @@ svUGraph svCircuit::buildGraph() const
     for (std::set<svNode>::const_iterator i = m_nodes.begin(); i != m_nodes.end(); i++)
         circuitNodes.push_back(*i);
 
-    wxASSERT(circuitNodes[0] == "0");
+    wxASSERT(circuitNodes[0] == svGroundNode);
     svUGraph ug(circuitNodes.size()-1 /* the node 0 (GND) does not need to be part of the graph */);
 
     // now create an "edge" in the graph for each device
@@ -360,7 +378,7 @@ svUGraph svCircuit::buildGraph() const
         std::vector<int> deviceNodeIndexes;
         for (size_t j=0; j<deviceNodes.size(); j++)
         {
-            if (deviceNodes[j] != "0")
+            if (deviceNodes[j] != svGroundNode)
             {
                 // find this node in the circuit's vector of nodes
                 std::vector<svNode>::const_iterator 
@@ -380,62 +398,101 @@ svUGraph svCircuit::buildGraph() const
     return ug;
 }
 
-svSchematic svCircuit::buildSchematic() const
+const wxRect& svCircuit::placeDevices(svPlaceAlgorithm ag)
 {
-    svSchematic ret;
+    m_bb = wxRect(0,0,0,0);
 
-    return ret;
-}
-
-void svCircuit::draw(wxDC& dc) const
-{
     if (m_devices.size() == 0)
-        return;
+        return m_bb;
 
-    std::vector<wxPoint> m_devicesPos;
-
-    // start placing the first device at the center of our virtual grid
-    // (we place it using its first node as reference)
-    //m_devicesPos.push_back(wxPoint(0,0));
-    //m_devicesPos.insert(m_devicesPos.end(), m_devices.size()-1, svInvalidPoint);
-    m_devicesPos.insert(m_devicesPos.end(), m_devices.size(), wxPoint(0,0));
-
-    // now place other devices connected to the same nodes of the first device:
-    for (size_t j=0; j<m_devices[0]->getNodesCount(); j++)
+    switch (ag)
     {
-        // TODO: verify the position is free
-        // TODO: cycle on the nodes, not on the devices! first place close together
-        //       all devices attached to the same node
-
-        if (m_devices[0]->getNode(j) != "0")        // node 0 == GND
+    case SVPA_KAMADA_KAWAI:
         {
-            unsigned int temp;
-            for (size_t i=1; i<m_devices.size(); i++)
-                if (m_devices[i]->isConnectedTo(m_devices[0]->getNode(j), &temp))
+            svUGraph graph = buildGraph();
+            //svUGraph::PositionMap map;
+            
+            typedef struct 
+            {
+                double x, y;
+            } point2D;
+
+            //typedef typename boost::graph_traits<Graph>::vertex_descriptor Vertex;
+//            boost::property_map<svUGraph, point2D> map;// = g§et(boost::vertex_index, graph);
+        //    boost::property_map<svUGraph, vertex_id_t>::type vertex_id_map; 
+//            circle_graph_layout(graph, map, 20.0);
+        }
+        break;
+
+    case SVPA_HEURISTIC_1:
+        {
+            // start placing the first device at the center of our virtual grid
+            // (we place it using its first node as reference)
+            for (unsigned int i=0; i<m_devices.size(); i++)
+                m_devices[i]->setGridPosition(wxPoint(0,0));
+
+            // now place other devices connected to the same nodes of the first device:
+            for (size_t j=0; j<m_devices[0]->getNodesCount(); j++)
+            {
+                // TODO: verify the position is free
+                // TODO: cycle on the nodes, not on the devices! first place close together
+                //       all devices attached to the same node
+
+                if (m_devices[0]->getNode(j) != svGroundNode)        // node 0 == GND
                 {
-                    // place it to the right of the previous device so that it can be easily
-                    // connected...
-                    m_devicesPos[i] = m_devicesPos[0] + wxPoint(1,0);
-                    m_devicesPos[i].x -= m_devices[i]->getLeftmostGridNodePosition().x;
-                    m_devicesPos[i].y += m_devices[i]->getGridNodePosition(temp).y;
+                    unsigned int temp;
+                    for (size_t i=1; i<m_devices.size(); i++)
+                        if (m_devices[i]->isConnectedTo(m_devices[0]->getNode(j), &temp))
+                        {
+                            // place it to the right of the previous device so that it can be easily
+                            // connected...
+                            wxPoint pos = m_devices[0]->getGridPosition() + wxPoint(1,0);
+                            pos.x -= m_devices[i]->getLeftmostGridNodePosition().x;
+                            pos.y += m_devices[i]->getRelativeGridNodePosition(temp).y;
+                            m_devices[i]->setGridPosition(pos);
+                            break;
+                        }
+                
                     break;
                 }
-        
-            break;
+            }
+
+            // define the translation values to use to make all grid points positive:
+            wxPoint offset;
+            for (size_t i=0; i<m_devices.size(); i++)
+            {
+                offset.x = std::min(offset.x, m_devices[i]->getLeftmostGridNodePosition().x);
+                offset.y = std::min(offset.y, m_devices[i]->getGridPosition().y);
+            }
+            offset = wxPoint(2,2) + offset*(-1);
+
+            m_bb.x = m_bb.y = INT_MAX-1;
+            for (size_t i=0; i<m_devices.size(); i++)
+            {
+                m_devices[i]->setGridPosition(m_devices[i]->getGridPosition() + offset);
+
+                m_bb.x = std::min(m_devices[i]->getGridPosition().x +
+                                m_devices[i]->getLeftmostGridNodePosition().x, m_bb.x);
+                m_bb.y = std::min(m_devices[i]->getGridPosition().y, m_bb.y);
+
+                m_bb.width = std::max(m_devices[i]->getGridPosition().x +
+                                m_devices[i]->getRightmostGridNodePosition().x, m_bb.width);
+                m_bb.height = std::max(m_devices[i]->getGridPosition().y +
+                                m_devices[i]->getBottommostGridNodePosition().y, m_bb.height);
+            }
+
+            m_bb.width -= m_bb.x;
+            m_bb.height -= m_bb.y;
         }
+        break;
     }
 
-    // define the translation values to use to make all grid points positive:
-    wxPoint offset;
-    for (size_t i=0; i<m_devices.size(); i++)
-    {
-        offset.x = std::min(offset.x, m_devicesPos[i].x);
-        offset.y = std::min(offset.y, m_devicesPos[i].y);
-    }
-    offset = wxPoint(2,2) + offset*(-1);
+    return m_bb;
+}
 
+void svCircuit::draw(wxDC& dc, unsigned int gridSize) const
+{
     // draw the grid
-    const unsigned int gridSize = 50;
     dc.SetPen(*wxLIGHT_GREY_PEN);
     for (int xx=0; xx<dc.GetSize().GetWidth(); xx+=gridSize)
         dc.DrawLine(xx, 0, xx, dc.GetSize().GetHeight());
@@ -446,12 +503,25 @@ void svCircuit::draw(wxDC& dc) const
     dc.SetPen(wxPen(*wxBLACK, 2));
     for (size_t i=0; i<m_devices.size(); i++)
     {
-        m_devices[i]->draw(dc, offset + m_devicesPos[i], gridSize);
+        m_devices[i]->draw(dc, m_devices[i]->getGridPosition(), gridSize);
 
+        // decorate the nodes of this device
         dc.SetBackgroundMode(wxTRANSPARENT);
         for (size_t j=0; j<m_devices[i]->getNodesCount(); j++)
-            dc.DrawText(m_devices[i]->getNode(j), 
-                        (offset + m_devicesPos[i] + m_devices[i]->getGridNodePosition(j))*gridSize);
+        {
+            wxPoint nodePos = 
+                (m_devices[i]->getGridPosition() + m_devices[i]->getRelativeGridNodePosition(j))*gridSize;
+
+            if (m_devices[i]->getNode(j) == svGroundNode)
+            {
+                int w = gridSize/3, d = gridSize/10;
+                dc.DrawLine(nodePos + wxPoint(-w,0), nodePos + wxPoint(w,0));
+                dc.DrawLine(nodePos + wxPoint(-w*2/4,d), nodePos + wxPoint(w*2/4,d));
+                dc.DrawLine(nodePos + wxPoint(-w*1/4,2*d), nodePos + wxPoint(w*1/4,2*d));
+            }
+            else
+                dc.DrawText(m_devices[i]->getNode(j), nodePos);
+        }
         dc.SetBackgroundMode(wxSOLID);
     }
 }

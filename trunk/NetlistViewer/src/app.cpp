@@ -30,8 +30,6 @@
 #endif
 
 #include <wx/aboutdlg.h>
-#include <boost/graph/kamada_kawai_spring_layout.hpp>
-#include <boost/graph/circle_layout.hpp>
 #include "netlist.h"
 
 // ----------------------------------------------------------------------------
@@ -74,10 +72,17 @@ public:
     void OnMouseUp(wxMouseEvent &event);
 
     void SetCircuit(const svCircuit& ckt)
-        { m_ckt = ckt; }
+    { 
+        m_ckt = ckt; 
+
+        wxRect rc = m_ckt.getBoundingBox();
+        SetVirtualSize((rc.x+rc.width+1)*m_gridSize, 
+                       (rc.y+rc.height+1)*m_gridSize);
+    }
 
 private:
     svCircuit m_ckt;
+    unsigned int m_gridSize;
 
     DECLARE_EVENT_TABLE()
 };
@@ -241,7 +246,7 @@ void SpiceViewerFrame::OnOpen(wxCommandEvent& WXUNUSED(event))
         return;     // the user changed idea...
     
     // proceed loading the file chosen by the user:
-    svParser parser;
+    svParserSPICE parser;
     svCircuitArray subcktArray; 
     if (!parser.load(subcktArray, openFileDialog.GetPath().ToStdString()))
     {
@@ -261,23 +266,7 @@ void SpiceViewerFrame::OnOpen(wxCommandEvent& WXUNUSED(event))
         return;
     }
 
-#if 0
-    svUGraph graph = subcktArray[0].buildGraph();
-    //svUGraph::PositionMap map;
-    
-    typedef struct 
-    {
-        double x, y;
-    } point2D;
-
-    //typedef typename boost::graph_traits<Graph>::vertex_descriptor Vertex;
-    boost::property_map<svUGraph, point2D> map;// = g§et(boost::vertex_index, graph);
-//    boost::property_map<svUGraph, vertex_id_t>::type vertex_id_map; 
-    circle_graph_layout(graph, map, 20.0);
-#else
-    subcktArray[0].buildSchematic();
-#endif
-
+    subcktArray[0].placeDevices(SVPA_HEURISTIC_1);
     m_canvas->SetCircuit(subcktArray[0]);
 
     Refresh();
@@ -315,22 +304,24 @@ END_EVENT_TABLE()
 
 SpiceViewerCanvas::SpiceViewerCanvas(wxFrame *parent)
         : wxScrolledWindow(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize,
-                           wxHSCROLL | wxVSCROLL | wxNO_FULL_REPAINT_ON_RESIZE)
+                           wxHSCROLL | wxVSCROLL)
 {
+    m_gridSize = 50;
+    SetScrollRate(m_gridSize/10, m_gridSize/10);
 }
 
 void SpiceViewerCanvas::OnPaint(wxPaintEvent &WXUNUSED(event))
 {
-    wxPaintDC pdc(this);
-    PrepareDC(pdc);
+    wxPaintDC dc(this);
+    PrepareDC(dc);
 
     // clear our background
-    pdc.SetBackground(*wxWHITE_BRUSH);
-    pdc.SetBackgroundMode(wxSOLID);
-    pdc.Clear();
+    dc.SetBackground(*wxWHITE_BRUSH);
+    dc.SetBackgroundMode(wxSOLID);
+    dc.Clear();
 
     // draw the schematic currently loaded
-    m_ckt.draw(pdc);
+    m_ckt.draw(dc, m_gridSize);
 }
 
 void SpiceViewerCanvas::OnMouseMove(wxMouseEvent &event)
