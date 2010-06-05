@@ -1,0 +1,8 @@
+.SUBCKT test_transistors gate drain
+
+Q1 drain gate 0 NPNstd
+M1 drain gate 0 NMOSstd
+J1 drain gate 0 NJFETstd
+
+.ENDS
+

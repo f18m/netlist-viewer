@@ -45,7 +45,16 @@ enum svRotation
     SVR_270     //!< 270 degrees clockwise rotation.
 };
 
+enum svPlaceAlgorithm
+{
+    SVPA_KAMADA_KAWAI,
+    SVPA_HEURISTIC_1
+};
+
+// globals:
+
 extern wxPoint svInvalidPoint;
+extern svNode svGroundNode;
 
 // ----------------------------------------------------------------------------
 // helper classes
@@ -75,11 +84,12 @@ class svBaseDevice
     //! The name of this device.
     std::string m_name;
 
-public:     // misc functions
+    //! The position of this device in the grid
+    //! (see the drawing functions).
+    //! NOTE: the contained coordinates can be negative.
+    wxPoint m_position;
 
-    //! Returns the character which characterizes the device in a SPICE netlist
-    //! like 'C' for capacitors or 'R' for resistors.
-    virtual char getSpiceIdentifier() const = 0;
+public:     // misc functions
 
     //! Returns an uppercase string with a human-readable description of this device.
     virtual std::string getHumanReadableDesc() const = 0;
@@ -127,14 +137,18 @@ public:     // node management functions
     //! (which corresponds to the number of "pins" of this device).
     virtual unsigned int getNodesCount() const = 0;
 
-public:     // parsing functions
+public:     // SPICE parsing functions
+
+    //! Returns the character which characterizes the device in a SPICE netlist
+    //! like 'C' for capacitors or 'R' for resistors.
+    virtual char getSPICEid() const = 0;
 
     //! Parses the given string as a property for this device 
     //! (which occurs as the j-th argument on the SPICE netlist).
     //! FIXME FIXME:
     //!   convert this to a parseProperties(const wxArrayString& props);
     //!   which receives all the strings listed after the component's node connections
-    virtual bool parseProperty(unsigned int j, const std::string& prop) = 0;
+    virtual bool parseSPICEProperty(unsigned int j, const std::string& prop) = 0;
 
 public:     // drawing functions
 
@@ -148,43 +162,48 @@ public:     // drawing functions
     //! and the pixel position 'y' is computed as:
     //!     y = x*gridSpacing;
     virtual void draw(wxDC& dc, const wxPoint& firstNodeGridPosition, unsigned int gridSpacing) const = 0;
-/*            {
-            dc.DrawText(getSpiceIdentifier(), firstNodeGridPosition*gridSpacing);
-        }
-*/
 
     //! Returns the grid position (relative to zero-th node) for the given node index
     //! (which should always be < getNodesCount()).
     //! The grid position for the zero-th node is always (0,0).
     //! Note that the values returned by this function define the (default) orientation
     //! of the component.
-    virtual wxPoint getGridNodePosition(unsigned int nodeIdx) const = 0;
+    virtual wxPoint getRelativeGridNodePosition(unsigned int nodeIdx) const = 0;
 
     //! @overload
     //! Returns the grid position for the given node. If this device is
     //! not attached to it, then the function returns ::svInvalidPoint.
-    virtual wxPoint getGridNodePosition(const svNode& node) const
+    virtual wxPoint getRelativeGridNodePosition(const svNode& node) const
         { 
             for (size_t i=0; i<m_nodes.size(); i++)
                 if (m_nodes[i] == node)
-                    return getGridNodePosition(i);
+                    return getRelativeGridNodePosition(i);
             return svInvalidPoint; 
         }
 
-    // NOTE: first node (the reference node must always be the topmost node!)
+    // NOTE: first node (the reference node) must always be the topmost node!
 
     virtual wxPoint getLeftmostGridNodePosition() const = 0;
     virtual wxPoint getRightmostGridNodePosition() const = 0;
     virtual wxPoint getBottommostGridNodePosition() const = 0;
 
-    //! Returns a value between 0 and 1 which indicates the caller the "predisposition" of this device
-    //! to be drawn with the given rotation.
+    //! Returns a value between 0 and 1 which indicates the caller the "predisposition" 
+    //! of this device to be drawn with the given rotation.
     //! A return value of zero means that it cannot be drawn rotated.
     //! A return value of one means that given rotation is ok.
     //! If the device returns the same value for multiple rotation values, it means that it's
     //! equally ok to draw the device in those rotation values.
     virtual double getRotationPredisposition(svRotation rot) const
         { return 1; }
+
+    //! Returns the current position of this device in the grid
+    //! (the position returned is the position of the reference node = first node).
+    wxPoint getGridPosition() const
+        { return m_position; }
+
+    //! Sets the position of this device in the grid.
+    void setGridPosition(const wxPoint& pt)
+        { m_position=pt; }
 };
 
 //! A SPICE subcircuit.
@@ -194,11 +213,16 @@ class svCircuit
     std::set<svNode> m_nodes;
     std::vector<svBaseDevice*> m_devices;
 
+    //! The bounding box for the grid where the devices of this circuit are placed.
+    //! This member variable is updated only by the placeDevices() function.
+    wxRect m_bb;
+
     void assign(const svCircuit& tocopy)
     {
         release();
         m_name = tocopy.m_name;
         m_nodes = tocopy.m_nodes;
+        m_bb = tocopy.m_bb;
         for (size_t i=0; i<tocopy.m_devices.size(); i++)
             m_devices.push_back(tocopy.m_devices[i]->clone());
     }
@@ -210,6 +234,7 @@ class svCircuit
         m_devices.clear();
         m_name.clear();
         m_nodes.clear();
+        m_bb = wxRect(0,0,0,0);
     }
 
 public:
@@ -233,6 +258,8 @@ public:
         return *this;
     }
 
+public:     // node & device management functions
+
     //! Adds a node to this subcircuit (unless a node with the same name already exists!).
     void addNode(const svNode& name)
         { m_nodes.insert(name); }
@@ -247,6 +274,8 @@ public:
     const std::vector<svBaseDevice*>& getDevices() const
         { return m_devices; }
 
+public:     // misc functions
+
     void setName(const std::string& name)
         { m_name = name; }
     std::string getName() const
@@ -255,19 +284,31 @@ public:
     //! FIXME
     svUGraph buildGraph() const;
 
-    //! FIXME
-    svSchematic buildSchematic() const;
-    void draw(wxDC& dc) const;
+    //! Updates the devices' positions (in the virtual grid) using the 
+    //! specified algorithm. Returns the bounding box of the circuit.
+    const wxRect& placeDevices(svPlaceAlgorithm ag);
+
+    //! Returns the bounding box for the devices of this circuit
+    //! as grid coordinates.
+    const wxRect& getBoundingBox() const
+        { return m_bb; }
+
+    //! Draws this circuit on the given DC, with the given grid size
+    //! (in pixels).
+    void draw(wxDC& dc, unsigned int gridSize) const;
+
+public:     // parser functions
+
+    //! Parses the given lines as a SPICE description of a SUBCKT.
+    bool parseSPICESubCkt(const wxArrayString& lines, 
+                          size_t startIdx, size_t endIdx);
 };
 
 //! The parser class for SPICE netlists.
-class svParser
+class svParserSPICE
 {
-    bool loadSubCkt(svCircuit& subckt, const wxArrayString& lines, 
-                    size_t startIdx, size_t endIdx);
-
 public:
-    svParser() {}
+    svParserSPICE() {}
     
     //! Loads a SPICE netlist and returns the array of parsed subcircuits.
     bool load(svCircuitArray& ret, const std::string& filename);
@@ -298,7 +339,7 @@ public:
 
     unsigned int getNodesCount() const { return 2; }
 
-    wxPoint getGridNodePosition(unsigned int nodeIdx) const
+    wxPoint getRelativeGridNodePosition(unsigned int nodeIdx) const
     {
         // default orientation: vertical
         wxASSERT(nodeIdx >= 0 && nodeIdx <= 1);
@@ -313,7 +354,7 @@ public:
 
     // SPICE line for such kind of devices is something like:
     //   L|C|R{name} {+node} {-node} [model] {value} [IC={initial}]  
-    bool parseProperty(unsigned int j, const std::string& prop)
+    bool parseSPICEProperty(unsigned int j, const std::string& prop)
     {
         wxString strtemp;
         svString str(prop);
@@ -354,14 +395,14 @@ class svCapacitor : public svPassiveDevice
 public:
     svCapacitor() {}
 
-    char getSpiceIdentifier() const { return 'C'; }
+    char getSPICEid() const { return 'C'; }
     std::string getHumanReadableDesc() const { return "CAPACITOR"; }
     svBaseDevice* clone() const { return new svCapacitor(*this); }
     
     void draw(wxDC& dc, const wxPoint& firstNodeGridPosition, unsigned int gridSpacing) const
     {
         wxPoint firstNodePos = firstNodeGridPosition*gridSpacing;
-        wxPoint secondNodePos = (firstNodeGridPosition + getGridNodePosition(1))*gridSpacing;
+        wxPoint secondNodePos = (firstNodeGridPosition + getRelativeGridNodePosition(1))*gridSpacing;
         int w = gridSpacing/3, l = gridSpacing/3;
 
         dc.DrawLine(firstNodePos, firstNodePos + wxPoint(0, l));
@@ -376,14 +417,14 @@ class svResistor : public svPassiveDevice
 public:
     svResistor() {}
 
-    char getSpiceIdentifier() const { return 'R'; }
+    char getSPICEid() const { return 'R'; }
     std::string getHumanReadableDesc() const { return "RESISTOR"; }
     svBaseDevice* clone() const { return new svResistor(*this); }
 
     void draw(wxDC& dc, const wxPoint& firstNodeGridPosition, unsigned int gridSpacing) const
     {
         wxPoint firstNodePos = firstNodeGridPosition*gridSpacing;
-        wxPoint secondNodePos = (firstNodeGridPosition + getGridNodePosition(1))*gridSpacing;
+        wxPoint secondNodePos = (firstNodeGridPosition + getRelativeGridNodePosition(1))*gridSpacing;
         int w = gridSpacing/7, l = gridSpacing/7;
 
         dc.DrawLine(firstNodePos, firstNodePos + wxPoint(0, l));
@@ -393,7 +434,7 @@ public:
         dc.DrawLine(firstNodePos + wxPoint(w, 4*l), firstNodePos + wxPoint(-w, 5*l));
         dc.DrawLine(firstNodePos + wxPoint(-w, 5*l), firstNodePos + wxPoint(0, 6*l));
         dc.DrawLine(firstNodePos + wxPoint(0, 6*l), firstNodePos + wxPoint(0, 7*l));
-        dc.DrawText(getSpiceIdentifier() + getName(), firstNodePos + wxPoint(2*w, 3*l));
+        dc.DrawText(getSPICEid() + getName(), firstNodePos + wxPoint(2*w, 3*l));
     }
 };
 
@@ -402,14 +443,14 @@ class svInductor : public svPassiveDevice
 public:
     svInductor() {}
 
-    char getSpiceIdentifier() const { return 'L'; }
+    char getSPICEid() const { return 'L'; }
     std::string getHumanReadableDesc() const { return "INDUCTOR"; }
     svBaseDevice* clone() const { return new svInductor(*this); }
     
     void draw(wxDC& dc, const wxPoint& firstNodeGridPosition, unsigned int gridSpacing) const
     {
         wxPoint firstNodePos = firstNodeGridPosition*gridSpacing;
-        wxPoint secondNodePos = (firstNodeGridPosition + getGridNodePosition(1))*gridSpacing;
+        wxPoint secondNodePos = (firstNodeGridPosition + getRelativeGridNodePosition(1))*gridSpacing;
         int w = gridSpacing/7, l = int(gridSpacing/4.5);
 
         dc.DrawLine(firstNodePos, firstNodePos + wxPoint(0, l));
@@ -424,14 +465,14 @@ class svDiode : public svPassiveDevice
 public:
     svDiode() {}
 
-    char getSpiceIdentifier() const { return 'D'; }
+    char getSPICEid() const { return 'D'; }
     std::string getHumanReadableDesc() const { return "DIODE"; }
     svBaseDevice* clone() const { return new svDiode(*this); }
 
     void draw(wxDC& dc, const wxPoint& firstNodeGridPosition, unsigned int gridSpacing) const
     {
         wxPoint firstNodePos = firstNodeGridPosition*gridSpacing;
-        wxPoint secondNodePos = (firstNodeGridPosition + getGridNodePosition(1))*gridSpacing;
+        wxPoint secondNodePos = (firstNodeGridPosition + getRelativeGridNodePosition(1))*gridSpacing;
         int w = gridSpacing/3, l = gridSpacing/3;
 
         dc.DrawLine(firstNodePos, firstNodePos + wxPoint(0, l));
@@ -465,7 +506,7 @@ public:
 
     unsigned int getNodesCount() const { return 3; }
 
-    wxPoint getGridNodePosition(unsigned int nodeIdx) const
+    wxPoint getRelativeGridNodePosition(unsigned int nodeIdx) const
     {
         // NOTE:
         // node 0 == drain/collector
@@ -488,7 +529,7 @@ public:
     //    J{name} {d} {g} {s} {model} [{area]} 
     //    M{name} {d} {g} {s} {sub} {mdl}  [L={value}]  [W={value}] 
     //    Q{name} {c} {b} {e} [{subs}] {model} [{area}]  
-    bool parseProperty(unsigned int j, const std::string& prop)
+    bool parseSPICEProperty(unsigned int j, const std::string& prop)
     {
         m_modelName = prop;
 
@@ -503,33 +544,32 @@ class svMOS : public svTransistorDevice
 public:
     svMOS() {}
 
-    char getSpiceIdentifier() const { return 'M'; }
+    char getSPICEid() const { return 'M'; }
     std::string getHumanReadableDesc() const { return "MOSFET"; }
     svBaseDevice* clone() const { return new svMOS(*this); }
 
     void draw(wxDC& dc, const wxPoint& firstNodeGridPosition, unsigned int gridSpacing) const
     {
-        wxPoint firstNodePos = firstNodeGridPosition*gridSpacing;
-        wxPoint secondNodePos = (firstNodeGridPosition + getGridNodePosition(1))*gridSpacing;
-        wxPoint thirdNodePos = (firstNodeGridPosition + getGridNodePosition(2))*gridSpacing;
+        wxPoint drainPos = firstNodeGridPosition*gridSpacing;
+        wxPoint gatePos = (firstNodeGridPosition + getRelativeGridNodePosition(1))*gridSpacing;
+        wxPoint sourcePos = (firstNodeGridPosition + getRelativeGridNodePosition(2))*gridSpacing;
         int w = gridSpacing/3, l = gridSpacing/3,
             oxw = gridSpacing/10;
 
         // the two vertical lines
-        dc.DrawLine(secondNodePos + wxPoint(gridSpacing/2, -l), secondNodePos + wxPoint(gridSpacing/2, l));
-        dc.DrawLine(secondNodePos + wxPoint(gridSpacing/2+oxw, -l-oxw), secondNodePos + wxPoint(gridSpacing/2+oxw, l+oxw));
+        dc.DrawLine(gatePos + wxPoint(gridSpacing/2, -l), gatePos + wxPoint(gridSpacing/2, l));
+        dc.DrawLine(gatePos + wxPoint(gridSpacing/2+oxw, -l-oxw), gatePos + wxPoint(gridSpacing/2+oxw, l+oxw));
 
         // the two horizontal lines
-        dc.DrawLine(secondNodePos + wxPoint(gridSpacing/2+oxw, -l), wxPoint(firstNodePos.x, secondNodePos.y-l));
-        dc.DrawLine(secondNodePos + wxPoint(gridSpacing/2+oxw, l), wxPoint(firstNodePos.x, secondNodePos.y+l));
+        dc.DrawLine(gatePos + wxPoint(gridSpacing/2+oxw, -l), wxPoint(drainPos.x, gatePos.y-l));
+        dc.DrawLine(gatePos + wxPoint(gridSpacing/2+oxw, l), wxPoint(drainPos.x, gatePos.y+l));
 
         // wire lines
-        dc.DrawLine(secondNodePos, secondNodePos + wxPoint(gridSpacing/2, 0));
-        dc.DrawLine(firstNodePos, wxPoint(firstNodePos.x, secondNodePos.y-l));
-        dc.DrawLine(thirdNodePos, wxPoint(thirdNodePos.x, secondNodePos.y+l));
+        dc.DrawLine(gatePos, gatePos + wxPoint(gridSpacing/2, 0));
+        dc.DrawLine(drainPos, wxPoint(drainPos.x, gatePos.y-l));
+        dc.DrawLine(sourcePos, wxPoint(sourcePos.x, gatePos.y+l));
 
         const int arrowSz = gridSpacing/10;
-
         dc.SetBrush(*wxBLACK_BRUSH);
         if (m_bNChannel)
         {
@@ -537,7 +577,7 @@ public:
                 { wxPoint(-arrowSz,-arrowSz), wxPoint(-arrowSz,arrowSz), wxPoint(0,0) };
 
             // translate the arrow to the right place
-            dc.DrawPolygon(3, arrow, thirdNodePos.x, secondNodePos.y+l, wxODDEVEN_RULE);
+            dc.DrawPolygon(3, arrow, sourcePos.x, gatePos.y+l, wxODDEVEN_RULE);
         }
         else
         {
@@ -545,7 +585,7 @@ public:
                 { wxPoint(0,0), wxPoint(arrowSz,-arrowSz), wxPoint(arrowSz,arrowSz) };
 
             // translate the arrow to the right place
-            dc.DrawPolygon(3, arrow, secondNodePos.x+gridSpacing/2+oxw, secondNodePos.y+l, wxODDEVEN_RULE);
+            dc.DrawPolygon(3, arrow, gatePos.x+gridSpacing/2+oxw, gatePos.y+l, wxODDEVEN_RULE);
         }
     }
 };
@@ -555,22 +595,46 @@ class svBJT : public svTransistorDevice
 public:
     svBJT() {}
 
-    char getSpiceIdentifier() const { return 'Q'; }
+    char getSPICEid() const { return 'Q'; }
     std::string getHumanReadableDesc() const { return "BJT"; }
     svBaseDevice* clone() const { return new svBJT(*this); }
 
     void draw(wxDC& dc, const wxPoint& firstNodeGridPosition, unsigned int gridSpacing) const
     {
-        wxPoint firstNodePos = firstNodeGridPosition*gridSpacing;
-        wxPoint secondNodePos = (firstNodeGridPosition + getGridNodePosition(1))*gridSpacing;
-        int w = gridSpacing/3, l = gridSpacing/3;
+        wxPoint collectorPos = firstNodeGridPosition*gridSpacing;
+        wxPoint basePos = (firstNodeGridPosition + getRelativeGridNodePosition(1))*gridSpacing;
+        wxPoint emitterPos = (firstNodeGridPosition + getRelativeGridNodePosition(2))*gridSpacing;
+        int w = 2*gridSpacing/3, l = gridSpacing/3,
+            oxw = gridSpacing/10;
 
-        /*dc.DrawLine(firstNodePos, firstNodePos + wxPoint(0, l));
-        dc.DrawLine(firstNodePos + wxPoint(-w, l), firstNodePos + wxPoint(w, l));
-        dc.DrawLine(firstNodePos + wxPoint(-w, l), firstNodePos + wxPoint(0, 2*l));
-        dc.DrawLine(firstNodePos + wxPoint(w, l), firstNodePos + wxPoint(0, 2*l));
-        dc.DrawLine(firstNodePos + wxPoint(-w, 2*l), firstNodePos + wxPoint(w, 2*l));
-        dc.DrawLine(firstNodePos + wxPoint(0, 2*l), firstNodePos + wxPoint(0, 3*l));*/
+        // draw wires toward nodes
+        dc.DrawLine(basePos, basePos + wxPoint(w, 0));
+        dc.DrawLine(collectorPos, collectorPos + wxPoint(0, w));
+        dc.DrawLine(emitterPos, emitterPos + wxPoint(0, -w));
+
+        // draw the symbol itself
+        dc.DrawLine(basePos + wxPoint(w, -l), basePos + wxPoint(w, l));
+        dc.DrawLine(basePos + wxPoint(w, 0), collectorPos + wxPoint(0, w));
+        dc.DrawLine(basePos + wxPoint(w, 0), emitterPos + wxPoint(0, -w));
+
+        const int arrowSz = gridSpacing/10;
+        dc.SetBrush(*wxBLACK_BRUSH);
+        if (m_bNChannel)
+        {
+            wxPoint arrow[] = 
+                { wxPoint(-arrowSz,-2*arrowSz), wxPoint(-2*arrowSz,-arrowSz), wxPoint(0,0) };
+
+            // translate the arrow to the right place
+            dc.DrawPolygon(3, arrow, emitterPos.x, emitterPos.y-w, wxODDEVEN_RULE);
+        }
+        else
+        {
+            wxPoint arrow[] = 
+                { wxPoint(0,0), wxPoint(arrowSz,2*arrowSz), wxPoint(2*arrowSz,arrowSz) };
+
+            // translate the arrow to the right place
+            dc.DrawPolygon(3, arrow, basePos.x+w, basePos.y, wxODDEVEN_RULE);
+        }
     }
 };
 
@@ -579,14 +643,14 @@ class svJFET : public svTransistorDevice
 public:
     svJFET() {}
 
-    char getSpiceIdentifier() const { return 'J'; }
+    char getSPICEid() const { return 'J'; }
     std::string getHumanReadableDesc() const { return "JFET"; }
     svBaseDevice* clone() const { return new svJFET(*this); }
 
     void draw(wxDC& dc, const wxPoint& firstNodeGridPosition, unsigned int gridSpacing) const
     {
         wxPoint firstNodePos = firstNodeGridPosition*gridSpacing;
-        wxPoint secondNodePos = (firstNodeGridPosition + getGridNodePosition(1))*gridSpacing;
+        wxPoint secondNodePos = (firstNodeGridPosition + getRelativeGridNodePosition(1))*gridSpacing;
         int w = gridSpacing/3, l = gridSpacing/3;
 
         // TODO
@@ -602,7 +666,7 @@ class svSourceDevice : public svBaseDevice
 public:
     unsigned int getNodesCount() const { return 2; }
 
-    wxPoint getGridNodePosition(unsigned int nodeIdx) const
+    wxPoint getRelativeGridNodePosition(unsigned int nodeIdx) const
     {
         // NOTE:
         // node 0 == plus (or the current output)
@@ -622,12 +686,12 @@ public:
     void draw(wxDC& dc, const wxPoint& firstNodeGridPosition, unsigned int gridSpacing) const
     {
         wxPoint firstNodePos = firstNodeGridPosition*gridSpacing;
-        wxPoint secondNodePos = (firstNodeGridPosition + getGridNodePosition(1))*gridSpacing;
+        wxPoint secondNodePos = (firstNodeGridPosition + getRelativeGridNodePosition(1))*gridSpacing;
 
         int r = gridSpacing/4;
         dc.DrawLine(firstNodePos, secondNodePos);
         dc.DrawCircle((firstNodePos+secondNodePos)/2, r);
-        dc.DrawText(getSpiceIdentifier() + getName(), (firstNodePos+secondNodePos)/2 - 0.7*wxPoint(r,r));
+        dc.DrawText(getSPICEid() + getName(), (firstNodePos+secondNodePos)/2 - 0.7*wxPoint(r,r));
     }
 };
 
@@ -654,7 +718,7 @@ public:
 
     // SPICE line for such kind of devices is something like:
     // I|V{name} {+node} {-node} [[DC] {value}] [AC {mag} [{phase}]]
-    bool parseProperty(unsigned int j, const std::string& prop)
+    bool parseSPICEProperty(unsigned int j, const std::string& prop)
     {
         wxString strtemp;
         svString str(prop);
@@ -691,7 +755,7 @@ class svISource : public svIndipendentSource
 public:
     svISource() {}
 
-    char getSpiceIdentifier() const { return 'I'; }
+    char getSPICEid() const { return 'I'; }
     std::string getHumanReadableDesc() const { return "CURRENT SOURCE"; }
     svBaseDevice* clone() const { return new svISource(*this); }
 };
@@ -701,7 +765,7 @@ class svVSource : public svIndipendentSource
 public:
     svVSource() {}
 
-    char getSpiceIdentifier() const { return 'V'; }
+    char getSPICEid() const { return 'V'; }
     std::string getHumanReadableDesc() const { return "VOLTAGE SOURCE"; }
     svBaseDevice* clone() const { return new svVSource(*this); }
 };
@@ -789,7 +853,7 @@ public:
     //  E|G{name} {+node} {-node} LAPLACE {expression} {s expression} 
     //  E|G{name} {+node} {-node} FREQ  {expression} (freq, gain, phase)*
     //  E|G{name} {+node} {-node} POLY(dim) {inputs X} {coeff k0,k1,...} [IC=value]
-    bool parseProperty(unsigned int j, const std::string& prop)
+    bool parseSPICEProperty(unsigned int j, const std::string& prop)
     {
         wxString strtemp;
         svString str(prop);
@@ -830,7 +894,7 @@ class svESource : public svVoltageControlledSource
 public:
     svESource() {}
 
-    char getSpiceIdentifier() const { return 'E'; }
+    char getSPICEid() const { return 'E'; }
     std::string getHumanReadableDesc() const { return "VOLTAGE-CONTROLLED VOLTAGE SOURCE"; }
     svBaseDevice* clone() const { return new svESource(); }
 };
@@ -840,7 +904,7 @@ class svGSource : public svVoltageControlledSource
 public:
     svGSource() {}
 
-    char getSpiceIdentifier() const { return 'G'; }
+    char getSPICEid() const { return 'G'; }
     std::string getHumanReadableDesc() const { return "VOLTAGE-CONTROLLED CURRENT SOURCE"; }
     svBaseDevice* clone() const { return new svGSource(); }
 };
@@ -865,7 +929,7 @@ public:
             // IMPORTANT: never return a pointer to our internal database;
             //            always return only clones
             for (size_t i=0; i<s_registered.size(); i++)
-                if (s_registered[i]->getSpiceIdentifier() == dev)
+                if (s_registered[i]->getSPICEid() == dev)
                     return s_registered[i]->clone();
             return NULL;
         }

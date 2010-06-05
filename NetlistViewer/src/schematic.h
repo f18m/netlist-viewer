@@ -26,15 +26,6 @@
 // helper classes
 // ----------------------------------------------------------------------------
 
-class svGrid 
-{
-public:
-    svGrid() {}
-
-
-
-};
-
 class svSchematic 
 {
     //std::string m_name;
