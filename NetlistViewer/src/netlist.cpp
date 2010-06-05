@@ -222,8 +222,6 @@ bool svCircuit::parseSPICESubCkt(const wxArrayString& lines, size_t startIdx, si
 
     for (size_t i=startIdx; i<endIdx; i++)
     {
-        wxLogDebug(lines[i]);
-
         wxArrayString arr = wxStringTokenize(lines[i], " ", wxTOKEN_DEFAULT);
         if (arr.size() <= 1)
             continue;
@@ -407,6 +405,27 @@ const wxRect& svCircuit::placeDevices(svPlaceAlgorithm ag)
 
     switch (ag)
     {
+    case SVPA_PLACE_NON_OVERLAPPED:
+        {
+            m_devices[0]->setGridPosition(wxPoint(0,0));
+
+            wxPoint lastPt = m_devices[0]->getRightmostGridNodePosition()+wxPoint(1,0);
+            for (unsigned int i=1; i<m_devices.size(); i++)
+            {
+                unsigned int w = m_devices[i]->getRightmostGridNodePosition().x - 
+                                 m_devices[i]->getLeftmostGridNodePosition().x;
+
+
+                unsigned int center_offset_w = m_devices[i]->getRelativeGridNodePosition(0).x -
+                                               m_devices[i]->getLeftmostGridNodePosition().x;
+
+                m_devices[i]->setGridPosition(lastPt + wxPoint(center_offset_w, 0));
+
+                lastPt.x += w+1;
+            }
+        }
+        break;
+
     case SVPA_KAMADA_KAWAI:
         {
             svUGraph graph = buildGraph();
@@ -457,53 +476,53 @@ const wxRect& svCircuit::placeDevices(svPlaceAlgorithm ag)
                 }
             }
 
-            // define the translation values to use to make all grid points positive:
-            wxPoint offset;
-            for (size_t i=0; i<m_devices.size(); i++)
-            {
-                offset.x = std::min(offset.x, m_devices[i]->getLeftmostGridNodePosition().x);
-                offset.y = std::min(offset.y, m_devices[i]->getGridPosition().y);
-            }
-            offset = wxPoint(2,2) + offset*(-1);
-
-            m_bb.x = m_bb.y = INT_MAX-1;
-            for (size_t i=0; i<m_devices.size(); i++)
-            {
-                m_devices[i]->setGridPosition(m_devices[i]->getGridPosition() + offset);
-
-                m_bb.x = std::min(m_devices[i]->getGridPosition().x +
-                                m_devices[i]->getLeftmostGridNodePosition().x, m_bb.x);
-                m_bb.y = std::min(m_devices[i]->getGridPosition().y, m_bb.y);
-
-                m_bb.width = std::max(m_devices[i]->getGridPosition().x +
-                                m_devices[i]->getRightmostGridNodePosition().x, m_bb.width);
-                m_bb.height = std::max(m_devices[i]->getGridPosition().y +
-                                m_devices[i]->getBottommostGridNodePosition().y, m_bb.height);
-            }
-
-            m_bb.width -= m_bb.x;
-            m_bb.height -= m_bb.y;
+            // TODO: finish placement of other devices
         }
         break;
     }
 
+    // define the translation values to use to make all grid points positive:
+    wxPoint offset;
+    for (size_t i=0; i<m_devices.size(); i++)
+    {
+        offset.x = std::min(offset.x, m_devices[i]->getLeftmostGridNodePosition().x);
+        offset.y = std::min(offset.y, m_devices[i]->getGridPosition().y);
+    }
+    offset = wxPoint(2,2) + offset*(-1);
+
+    for (size_t i=0; i<m_devices.size(); i++)
+        m_devices[i]->setGridPosition(m_devices[i]->getGridPosition() + offset);
+
+    updateBoundingBox();
     return m_bb;
+}
+
+void svCircuit::updateBoundingBox()
+{
+    m_bb.x = m_bb.y = INT_MAX-1;
+    for (size_t i=0; i<m_devices.size(); i++)
+    {
+        m_bb.x = std::min(m_devices[i]->getGridPosition().x +
+                        m_devices[i]->getLeftmostGridNodePosition().x, m_bb.x);
+        m_bb.y = std::min(m_devices[i]->getGridPosition().y, m_bb.y);
+
+        m_bb.width = std::max(m_devices[i]->getGridPosition().x +
+                        m_devices[i]->getRightmostGridNodePosition().x, m_bb.width);
+        m_bb.height = std::max(m_devices[i]->getGridPosition().y +
+                        m_devices[i]->getBottommostGridNodePosition().y, m_bb.height);
+    }
+
+    m_bb.width -= m_bb.x;
+    m_bb.height -= m_bb.y;
 }
 
 void svCircuit::draw(wxDC& dc, unsigned int gridSize) const
 {
-    // draw the grid
-    dc.SetPen(*wxLIGHT_GREY_PEN);
-    for (int xx=0; xx<dc.GetSize().GetWidth(); xx+=gridSize)
-        dc.DrawLine(xx, 0, xx, dc.GetSize().GetHeight());
-    for (int yy=0; yy<dc.GetSize().GetHeight(); yy+=gridSize)
-        dc.DrawLine(0, yy, dc.GetSize().GetWidth(), yy);
-
     // draw all the devices
     dc.SetPen(wxPen(*wxBLACK, 2));
     for (size_t i=0; i<m_devices.size(); i++)
     {
-        m_devices[i]->draw(dc, m_devices[i]->getGridPosition(), gridSize);
+        m_devices[i]->draw(dc, gridSize);
 
         // decorate the nodes of this device
         dc.SetBackgroundMode(wxTRANSPARENT);
@@ -523,6 +542,24 @@ void svCircuit::draw(wxDC& dc, unsigned int gridSize) const
                 dc.DrawText(m_devices[i]->getNode(j), nodePos);
         }
         dc.SetBackgroundMode(wxSOLID);
+    }
+
+    // draw an "airwire" for each device node
+    dc.SetPen(*wxGREEN_PEN);
+    for (std::set<svNode>::const_iterator i=m_nodes.begin(); i != m_nodes.end(); i++)
+    {
+        if (*i != svGroundNode)
+        {
+            // TO-OPTIMIZE: we may scan the device list and then each device's node and 
+            //              put the device's node relative position in an array indexed by
+            //              the node's name (single pass on each device's node and we have
+            //              the data organized as we need).
+            std::vector<wxPoint> arrConnectedNodes = getDeviceNodesConnectedTo(*i);
+            for (size_t j=0; j<arrConnectedNodes.size(); j++)
+                for (size_t k=0; k<arrConnectedNodes.size(); k++)
+                    if (k != j)
+                        dc.DrawLine(arrConnectedNodes[j]*gridSize, arrConnectedNodes[k]*gridSize);
+        }
     }
 }
 
