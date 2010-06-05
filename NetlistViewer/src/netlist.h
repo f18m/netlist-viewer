@@ -163,7 +163,7 @@ public:     // drawing functions
     //! the given grid position. Note that the conversion between the grid position 'x'
     //! and the pixel position 'y' is computed as:
     //!     y = x*gridSpacing;
-    virtual void draw(wxDC& dc, unsigned int gridSpacing) const = 0;
+    virtual void draw(wxDC& dc, unsigned int gridSpacing, const wxPen& pen) const = 0;
 
     //! Returns the grid position (relative to zero-th node) for the given node index
     //! (which should always be < getNodesCount()).
@@ -268,7 +268,6 @@ public:
 
     svCircuit(const svCircuit& tocopy) 
     {
-        release();
         assign(tocopy);
     }
 
@@ -339,7 +338,7 @@ public:     // drawing functions
 
     //! Draws this circuit on the given DC, with the given grid size
     //! (in pixels).
-    void draw(wxDC& dc, unsigned int gridSize) const;
+    void draw(wxDC& dc, unsigned int gridSize, int selectedDevice = wxNOT_FOUND) const;
 
     //! Returns the index of the first device whose (absolute) center point
     //! lies in the given rectangle.
@@ -457,13 +456,14 @@ public:
     std::string getHumanReadableDesc() const { return "CAPACITOR"; }
     svBaseDevice* clone() const { return new svCapacitor(*this); }
     
-    void draw(wxDC& dc, unsigned int gridSpacing) const
+    void draw(wxDC& dc, unsigned int gridSpacing, const wxPen& pen) const
     {
         wxPoint firstNodePos = m_position*gridSpacing;
         wxPoint secondNodePos = (m_position + getRelativeGridNodePosition(1))*gridSpacing;
         int w = gridSpacing/4, l = 2*gridSpacing/5;
 
         // draw wires
+        dc.SetPen(pen);
         dc.DrawLine(firstNodePos, firstNodePos + wxPoint(0, l));
         dc.DrawLine(secondNodePos, secondNodePos + wxPoint(0, -l));
 
@@ -482,19 +482,23 @@ public:
     std::string getHumanReadableDesc() const { return "RESISTOR"; }
     svBaseDevice* clone() const { return new svResistor(*this); }
 
-    void draw(wxDC& dc, unsigned int gridSpacing) const
+    void draw(wxDC& dc, unsigned int gridSpacing, const wxPen& pen) const
     {
         wxPoint firstNodePos = m_position*gridSpacing;
         wxPoint secondNodePos = (m_position + getRelativeGridNodePosition(1))*gridSpacing;
         int w = gridSpacing/7, l = gridSpacing/7;
 
+        dc.SetPen(pen);
         dc.DrawLine(firstNodePos, firstNodePos + wxPoint(0, l));
         dc.DrawLine(firstNodePos + wxPoint(0, l), firstNodePos + wxPoint(w, 2*l));
         dc.DrawLine(firstNodePos + wxPoint(w, 2*l), firstNodePos + wxPoint(-w, 3*l));
         dc.DrawLine(firstNodePos + wxPoint(-w, 3*l), firstNodePos + wxPoint(w, 4*l));
         dc.DrawLine(firstNodePos + wxPoint(w, 4*l), firstNodePos + wxPoint(-w, 5*l));
         dc.DrawLine(firstNodePos + wxPoint(-w, 5*l), firstNodePos + wxPoint(0, 6*l));
-        dc.DrawLine(firstNodePos + wxPoint(0, 6*l), firstNodePos + wxPoint(0, 7*l));
+        dc.DrawLine(firstNodePos + wxPoint(0, 6*l), secondNodePos);
+
+        dc.SetTextBackground(wxNullColour);
+        dc.SetTextForeground(pen.GetColour());
         dc.DrawText(getSPICEid() + getName(), firstNodePos + wxPoint(2*w, 3*l));
     }
 };
@@ -508,13 +512,14 @@ public:
     std::string getHumanReadableDesc() const { return "INDUCTOR"; }
     svBaseDevice* clone() const { return new svInductor(*this); }
     
-    void draw(wxDC& dc, unsigned int gridSpacing) const
+    void draw(wxDC& dc, unsigned int gridSpacing, const wxPen& pen) const
     {
         wxPoint firstNodePos = m_position*gridSpacing;
         wxPoint secondNodePos = (m_position + getRelativeGridNodePosition(1))*gridSpacing;
         wxPoint middleNodePos = (firstNodePos+secondNodePos)/2;
         int w = gridSpacing/7, l = int(gridSpacing/4.5);
 
+        dc.SetPen(pen);
         dc.DrawLine(firstNodePos, firstNodePos + wxPoint(0, l));
         dc.DrawArc(firstNodePos + wxPoint(0, 2*l), firstNodePos + wxPoint(0, l), firstNodePos + wxPoint(0, 1.5*l));
         dc.DrawArc(secondNodePos + wxPoint(0, -l), secondNodePos + wxPoint(0, -2*l), secondNodePos + wxPoint(0, -1.5*l));
@@ -533,12 +538,13 @@ public:
     std::string getHumanReadableDesc() const { return "DIODE"; }
     svBaseDevice* clone() const { return new svDiode(*this); }
 
-    void draw(wxDC& dc, unsigned int gridSpacing) const
+    void draw(wxDC& dc, unsigned int gridSpacing, const wxPen& pen) const
     {
         wxPoint firstNodePos = m_position*gridSpacing;
         wxPoint secondNodePos = (m_position + getRelativeGridNodePosition(1))*gridSpacing;
         int w = gridSpacing/3, l = gridSpacing/3;
 
+        dc.SetPen(pen);
         dc.DrawLine(firstNodePos, firstNodePos + wxPoint(0, l));
         dc.DrawLine(firstNodePos + wxPoint(-w, l), firstNodePos + wxPoint(w, l));
         dc.DrawLine(firstNodePos + wxPoint(-w, l), firstNodePos + wxPoint(0, 2*l));
@@ -612,7 +618,7 @@ public:
     std::string getHumanReadableDesc() const { return "MOSFET"; }
     svBaseDevice* clone() const { return new svMOS(*this); }
 
-    void draw(wxDC& dc, unsigned int gridSpacing) const
+    void draw(wxDC& dc, unsigned int gridSpacing, const wxPen& pen) const
     {
         wxPoint drainPos = m_position*gridSpacing;
         wxPoint gatePos = (m_position + getRelativeGridNodePosition(1))*gridSpacing;
@@ -621,6 +627,7 @@ public:
             oxw = gridSpacing/10;
 
         // the two vertical lines
+        dc.SetPen(pen);
         dc.DrawLine(gatePos + wxPoint(gridSpacing/2, -l), gatePos + wxPoint(gridSpacing/2, l));
         dc.DrawLine(gatePos + wxPoint(gridSpacing/2+oxw, -l-oxw), gatePos + wxPoint(gridSpacing/2+oxw, l+oxw));
 
@@ -634,7 +641,7 @@ public:
         dc.DrawLine(sourcePos, wxPoint(sourcePos.x, gatePos.y+l));
 
         const int arrowSz = gridSpacing/10;
-        dc.SetBrush(*wxBLACK_BRUSH);
+        dc.SetBrush(wxBrush(pen.GetColour()));
         if (m_bNChannel)
         {
             wxPoint arrow[] = 
@@ -663,7 +670,7 @@ public:
     std::string getHumanReadableDesc() const { return "BJT"; }
     svBaseDevice* clone() const { return new svBJT(*this); }
 
-    void draw(wxDC& dc, unsigned int gridSpacing) const
+    void draw(wxDC& dc, unsigned int gridSpacing, const wxPen& pen) const
     {
         wxPoint collectorPos = m_position*gridSpacing;
         wxPoint basePos = (m_position + getRelativeGridNodePosition(1))*gridSpacing;
@@ -672,6 +679,7 @@ public:
             oxw = gridSpacing/10;
 
         // draw wires toward nodes
+        dc.SetPen(pen);
         dc.DrawLine(basePos, basePos + wxPoint(w, 0));
         dc.DrawLine(collectorPos, collectorPos + wxPoint(0, w));
         dc.DrawLine(emitterPos, emitterPos + wxPoint(0, -w));
@@ -682,7 +690,7 @@ public:
         dc.DrawLine(basePos + wxPoint(w, 0), emitterPos + wxPoint(0, -w));
 
         const int arrowSz = gridSpacing/10;
-        dc.SetBrush(*wxBLACK_BRUSH);
+        dc.SetBrush(wxBrush(pen.GetColour()));
         if (m_bNChannel)
         {
             wxPoint arrow[] = 
@@ -711,7 +719,7 @@ public:
     std::string getHumanReadableDesc() const { return "JFET"; }
     svBaseDevice* clone() const { return new svJFET(*this); }
 
-    void draw(wxDC& dc, unsigned int gridSpacing) const
+    void draw(wxDC& dc, unsigned int gridSpacing, const wxPen& pen) const
     {
         wxPoint drainPos = m_position*gridSpacing;
         wxPoint gatePos = (m_position + getRelativeGridNodePosition(1))*gridSpacing;
@@ -748,17 +756,6 @@ public:
     wxPoint getLeftmostGridNodePosition() const { return wxPoint(0,0); }
     wxPoint getRightmostGridNodePosition() const { return wxPoint(0,0); }
     wxPoint getBottommostGridNodePosition() const { return wxPoint(0,1); }
-
-    void draw(wxDC& dc, unsigned int gridSpacing) const
-    {
-        wxPoint firstNodePos = m_position*gridSpacing;
-        wxPoint secondNodePos = (m_position + getRelativeGridNodePosition(1))*gridSpacing;
-
-        int r = gridSpacing/4;
-        dc.DrawLine(firstNodePos, secondNodePos);
-        dc.DrawCircle((firstNodePos+secondNodePos)/2, r);
-        dc.DrawText(getSPICEid() + getName(), (firstNodePos+secondNodePos)/2 - 0.7*wxPoint(r,r));
-    }
 };
 
 /*
@@ -781,6 +778,21 @@ public:
     svIndipendentSource() {}
 
     unsigned int getNodesCount() const { return 2; }
+
+    void draw(wxDC& dc, unsigned int gridSpacing, const wxPen& pen) const
+    {
+        wxPoint firstNodePos = m_position*gridSpacing;
+        wxPoint secondNodePos = (m_position + getRelativeGridNodePosition(1))*gridSpacing;
+        int r = gridSpacing/4;
+
+        dc.SetPen(pen);
+        dc.DrawLine(firstNodePos, secondNodePos);
+        dc.DrawCircle((firstNodePos+secondNodePos)/2, r);
+
+        dc.SetTextBackground(wxNullColour);
+        dc.SetTextForeground(pen.GetColour());
+        dc.DrawText(getSPICEid() + getName(), (firstNodePos+secondNodePos)/2 - 0.7*wxPoint(r,r));
+    }
 
     // SPICE line for such kind of devices is something like:
     // I|V{name} {+node} {-node} [[DC] {value}] [AC {mag} [{phase}]]
@@ -912,6 +924,25 @@ public:
 
     unsigned int getNodesCount() const { return 2; }
 
+    void draw(wxDC& dc, unsigned int gridSpacing, const wxPen& pen) const
+    {
+        wxPoint firstNodePos = m_position*gridSpacing;
+        wxPoint secondNodePos = (m_position + getRelativeGridNodePosition(1))*gridSpacing;
+        int l = gridSpacing/4, w = gridSpacing/4;
+
+        dc.SetPen(pen);
+        dc.DrawLine(firstNodePos, firstNodePos + wxPoint(0,l));
+        dc.DrawLine(secondNodePos, secondNodePos + wxPoint(0,-l));
+
+        dc.DrawLine(firstNodePos + wxPoint(0,l), firstNodePos + wxPoint(-w,l*2));
+        dc.DrawLine(firstNodePos + wxPoint(-w,l*2), firstNodePos + wxPoint(0,3*l));
+        dc.DrawLine(firstNodePos + wxPoint(0,l), firstNodePos + wxPoint(w,l*2));
+        dc.DrawLine(firstNodePos + wxPoint(w,l*2), firstNodePos + wxPoint(0,3*l));
+
+        //dc.SetTextBackground(wxTransparentColour);
+        //dc.DrawText(getSPICEid() + getName(), (firstNodePos+secondNodePos)/2 - 0.7*wxPoint(r,r));
+    }
+
     // SPICE line for such kind of devices is something like:
     //  E|G{name} {+node} {-node} {+cntrl} {-cntrl} {gain} 
     //  E|G{name} {+node} {-node} VALUE {expression}
@@ -962,7 +993,7 @@ public:
 
     char getSPICEid() const { return 'E'; }
     std::string getHumanReadableDesc() const { return "VOLTAGE-CONTROLLED VOLTAGE SOURCE"; }
-    svBaseDevice* clone() const { return new svESource(); }
+    svBaseDevice* clone() const { return new svESource(*this); }
 };
 
 class svGSource : public svVoltageControlledSource
@@ -972,7 +1003,7 @@ public:
 
     char getSPICEid() const { return 'G'; }
     std::string getHumanReadableDesc() const { return "VOLTAGE-CONTROLLED CURRENT SOURCE"; }
-    svBaseDevice* clone() const { return new svGSource(); }
+    svBaseDevice* clone() const { return new svGSource(*this); }
 };
 
 

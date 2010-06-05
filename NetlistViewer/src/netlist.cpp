@@ -213,68 +213,6 @@ bool svString::getValue(double *res) const
 }
 
 // ----------------------------------------------------------------------------
-// svCircuit
-// ----------------------------------------------------------------------------
-
-bool svCircuit::parseSPICESubCkt(const wxArrayString& lines, size_t startIdx, size_t endIdx)
-{
-    release();
-
-    for (size_t i=startIdx; i<endIdx; i++)
-    {
-        wxArrayString arr = wxStringTokenize(lines[i], " ", wxTOKEN_DEFAULT);
-        if (arr.size() <= 1)
-            continue;
-
-        wxString comp_name = arr[0];
-        arr.erase(arr.begin());
-
-        // intercept some "special" SPICE statements
-        if (comp_name == ".MODEL")
-            continue;
-
-        // first letter of the component identifies it:
-        svBaseDevice* dev = svDeviceFactory::getDeviceMatchingIdentifier(comp_name[0]);
-        if (!dev)
-        {
-            wxLogError("Unknown component type for '%s'\n", comp_name);
-            return false;
-        }
-
-        dev->setName(comp_name.substr(1).ToStdString());
-
-        if (arr.size() < dev->getNodesCount())
-        {
-            wxLogError("At line %d: device '%s' is missing one (or more) of the required nodes", 
-                       i, dev->getHumanReadableDesc().c_str());
-            return false;
-        }
-
-        for (size_t j=0; j<dev->getNodesCount(); j++)
-        {
-            addNode(arr[0].ToStdString());
-            dev->addNode(arr[0].ToStdString());
-
-            arr.erase(arr.begin());     // this node has been processed; remove it
-        }
-
-        for (size_t j=0; j<arr.size(); j++)
-        {
-            // there are additional properties device-specific:
-            if (!dev->parseSPICEProperty(j, arr[j].ToStdString()))
-            {
-                wxLogError("Error parsing argument '%s' of line %d: '%s'", arr[j], i, lines[i]);
-                return false;
-            }
-        }
-
-        addDevice(dev);
-    }
-
-    return true;
-}
-
-// ----------------------------------------------------------------------------
 // svParserSPICE
 // ----------------------------------------------------------------------------
 
@@ -339,10 +277,11 @@ bool svParserSPICE::load(svCircuitArray& ret, const std::string& filename)
             }
 
             // parse the subcircuit we just found
-            svCircuit sub(strtemp.BeforeFirst(' ').ToStdString());
+            svCircuit sub;
             if (!sub.parseSPICESubCkt(toparse, startIdx, (size_t)endIdx))
                 return false;
 
+            sub.setName(strtemp.BeforeFirst(' ').ToStdString());
             ret.push_back(sub);
         }
     }
@@ -353,6 +292,66 @@ bool svParserSPICE::load(svCircuitArray& ret, const std::string& filename)
 // ----------------------------------------------------------------------------
 // svCircuit
 // ----------------------------------------------------------------------------
+
+bool svCircuit::parseSPICESubCkt(const wxArrayString& lines, size_t startIdx, size_t endIdx)
+{
+    release();
+
+    for (size_t i=startIdx; i<endIdx; i++)
+    {
+        wxArrayString arr = wxStringTokenize(lines[i], " ", wxTOKEN_DEFAULT);
+        if (arr.size() <= 1)
+            continue;
+
+        wxString comp_name = arr[0];
+        arr.erase(arr.begin());
+
+        // intercept some "special" SPICE statements
+        if (comp_name == ".MODEL")
+            continue;
+
+        // first letter of the component identifies it:
+        svBaseDevice* dev = svDeviceFactory::getDeviceMatchingIdentifier(comp_name[0]);
+        if (!dev)
+        {
+            wxLogError("Unknown component type for '%s'\n", comp_name);
+            return false;
+        }
+
+        dev->setName(comp_name.substr(1).ToStdString());
+
+        if (arr.size() < dev->getNodesCount())
+        {
+            wxLogError("At line %d: device '%s' is missing one (or more) of the required nodes", 
+                       i, dev->getHumanReadableDesc().c_str());
+            return false;
+        }
+
+        for (size_t j=0; j<dev->getNodesCount(); j++)
+        {
+            addNode(arr[0].ToStdString());
+            dev->addNode(arr[0].ToStdString());
+
+            arr.erase(arr.begin());     // this node has been processed; remove it
+        }
+
+        wxASSERT(dev->getNodes().size() == dev->getNodesCount());
+
+        for (size_t j=0; j<arr.size(); j++)
+        {
+            // there are additional properties device-specific:
+            if (!dev->parseSPICEProperty(j, arr[j].ToStdString()))
+            {
+                wxLogError("Error parsing argument '%s' of line %d: '%s'", arr[j], i, lines[i]);
+                return false;
+            }
+        }
+
+        addDevice(dev);
+    }
+
+    return true;
+}
 
 svUGraph svCircuit::buildGraph() const
 {
@@ -516,13 +515,14 @@ void svCircuit::updateBoundingBox()
     m_bb.height -= m_bb.y;
 }
 
-void svCircuit::draw(wxDC& dc, unsigned int gridSize) const
+void svCircuit::draw(wxDC& dc, unsigned int gridSize, int selectedDevice) const
 {
     // draw all the devices
-    dc.SetPen(wxPen(*wxBLACK, 2));
+    wxPen normal(*wxBLACK, 2),
+          selected(*wxRED, 2);
     for (size_t i=0; i<m_devices.size(); i++)
     {
-        m_devices[i]->draw(dc, gridSize);
+        m_devices[i]->draw(dc, gridSize, selectedDevice == i ? selected : normal);
 
         // decorate the nodes of this device
         dc.SetBackgroundMode(wxTRANSPARENT);

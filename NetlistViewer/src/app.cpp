@@ -93,6 +93,7 @@ private:        // misc vars
 private:        // vars for dragging
     svBaseDevice* m_pDraggedDev;
     wxPoint m_ptDraggedDevOffset; // in pixel coords
+    unsigned int m_idxDraggedDev;
 
     DECLARE_EVENT_TABLE()
 };
@@ -184,7 +185,7 @@ bool SpiceViewerApp::OnInit()
 #endif
 
     // create the main application window
-    SpiceViewerFrame *frame = new SpiceViewerFrame("SPICE netlist viewer");
+    SpiceViewerFrame *frame = new SpiceViewerFrame("Netlist viewer");
 
     // and show it (the frames, unlike simple controls, are not shown when
     // created initially)
@@ -250,7 +251,7 @@ void SpiceViewerFrame::OnOpen(wxCommandEvent& WXUNUSED(event))
 {
     wxFileDialog 
         openFileDialog(this, "Open SPICE netlist", "", "",
-                       "SPICE netlists (*.net;*.cir)|*.net;*.cir", wxFD_OPEN|wxFD_FILE_MUST_EXIST);
+                       "SPICE netlists (*.net;*.cir;*.ckt)|*.net;*.cir;*.ckt", wxFD_OPEN|wxFD_FILE_MUST_EXIST);
 
     if (openFileDialog.ShowModal() == wxID_CANCEL)
         return;     // the user changed idea...
@@ -278,6 +279,7 @@ void SpiceViewerFrame::OnOpen(wxCommandEvent& WXUNUSED(event))
 
     subcktArray[0].placeDevices(SVPA_PLACE_NON_OVERLAPPED);
     m_canvas->SetCircuit(subcktArray[0]);
+    SetTitle(wxString::Format("Netlist Viewer [%s]", subcktArray[0].getName()));
 
     Refresh();
 }
@@ -318,6 +320,7 @@ SpiceViewerCanvas::SpiceViewerCanvas(wxFrame *parent)
                            wxHSCROLL | wxVSCROLL | wxFULL_REPAINT_ON_RESIZE)
 {
     m_pDraggedDev = NULL;
+    m_idxDraggedDev = wxNOT_FOUND;
     m_gridSize = 40;
     m_gridPen = wxPen(*wxLIGHT_GREY, 1, wxPENSTYLE_DOT);
 
@@ -346,7 +349,8 @@ void SpiceViewerCanvas::OnPaint(wxPaintEvent &WXUNUSED(event))
         dc.DrawLine(0, yy, sz.GetWidth(), yy);
 
     // draw the schematic currently loaded
-    m_ckt.draw(dc, m_gridSize);
+    m_ckt.draw(dc, m_gridSize, 
+               m_pDraggedDev ? m_idxDraggedDev : wxNOT_FOUND);
 }
 
 void SpiceViewerCanvas::OnMouseMove(wxMouseEvent &event)
@@ -392,15 +396,21 @@ void SpiceViewerCanvas::OnMouseDown(wxMouseEvent &event)
 
     // the device we're dragging:
     m_pDraggedDev = m_ckt.getDevices().at(idx);
+    m_idxDraggedDev = idx;
 
     // the offset (in pixel) between the clicked point and the reference node of the dragged device
     m_ptDraggedDevOffset = m_pDraggedDev->getGridPosition()*m_gridSize - click;
+
+    Refresh();
 }
 
 void SpiceViewerCanvas::OnMouseUp(wxMouseEvent &event)
 {
     if (event.LeftUp())
+    {
         m_pDraggedDev = NULL;
+        Refresh();
+    }
     else if (event.RightUp() && m_pDraggedDev)
     {
         // rotate the device being dragged
@@ -411,7 +421,17 @@ void SpiceViewerCanvas::OnMouseUp(wxMouseEvent &event)
 void SpiceViewerCanvas::OnMouseWheel(wxMouseEvent &event)
 {
     if (!event.ControlDown())
+    {
+        wxPoint offset;
+        if (event.GetWheelAxis() == 0)      // vertical
+            offset = wxPoint(0, -2*event.GetWheelRotation()/event.GetWheelDelta());
+        else if (event.GetWheelAxis() == 1)      // horizontal
+            offset = wxPoint(-2*event.GetWheelRotation()/event.GetWheelDelta(), 0);
+
+        Scroll(GetViewStart() + offset);
+
         return;
+    }
 
     // zoom!
     m_gridSize += 2*event.GetWheelRotation()/event.GetWheelDelta();
