@@ -1,0 +1,133 @@
+* PSpice Model Editor - Version 10.2.0
+
+*
+
+*This model, models the following parameters
+
+*transient response
+
+*voltage noise
+
+*small signal bandwidth
+
+*slew rate
+
+*open loop gain and phase
+
+*frequency compensation
+
+*output swing
+
+*input common mode range
+
+*input bias current and supply current
+
+*
+*Model created by AEi Systems, LLC www.aeng.com
+
+*
+.SUBCKT AD8099 INp INm Vcc Vee Vout Comp FB
+
+*              In+ In- Vcc Vee Vout Comp FB
+
+* Input
+
+
+Rinm 13 INp 1k
+
+Cinm INm 13 2p
+
+Ib vcc 15 DC=4m
+
+Q1in 26 INm 15 QIN 
+
+Q2in 6 2 15 QIN 
+
+.MODEL QIN PNP BF=300 IS=3e-12 ISE=1.2e-13 NE=1.65 RE=18 KF=2E-14 AF=1
+
+
+
+* Comp
+
+
+Cco comp 0 2.6p
+
+R0 comp 0 450k
+
+Rdiff INm INp 4k
+
+Vos 2 INp DC=.1m
+
+Ios INp INm DC=30n
+
+RCq1 26 3 375
+
+RCq2 6 vee 375
+
+
+
+* Interstage
+
+
+GBIgain 0 comp Value={ v(26,6)*3m }
+
+Rp1 16 zfp1 265
+
+Cp1 zfp1 0 1.43p
+
+Rp2 1 4 265
+
+Cp2 4 0 1.43p
+
+Ebuf 1 0 zfp1 0 1
+
+
+
+* Output
+
+
+V5 3 vee
+E2 FB 0 4 0 1
+
+
+EB1 16 0 Value={ IF ( v(comp) > v(vcc) , v(vcc), IF ( v(comp) < v(vee) , v(vee) , v(comp) ) ) }
+
+Q11 vcc 29 31 _Q2_modX 
+
+Q12 vcc 31 14 _Q2_modX 
+
+.MODEL _Q2_modX NPN RC=30 RE=0
+
+Q13 vee 33 34 _Q6_modX 
+
+Q14 vee 34 14 _Q6_modX 
+
+.MODEL _Q6_modX PNP RC=20 RE=0
+
+Rout 14 38 15
+
+Cout vout 40 1.5p
+
+RCout 40 0 .1
+
+Co 14 43 2p
+Ro 43 0 .15
+
+Lout 38 vout 2.5n
+
+V14 29 zfp1 DC=1.555
+
+V15 zfp1 33 DC=1.555
+
+V16 vcc 36 DC=1.87
+
+V17 37 vee DC=1.87
+
+D5 zfp1 36 DMOD 
+
+D6 37 zfp1 DMOD 
+
+.MODEL DMOD D
+
+.ENDS
+
