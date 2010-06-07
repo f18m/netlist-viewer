@@ -30,13 +30,27 @@
 #endif
 
 #include <wx/aboutdlg.h>
+#include <wx/dcbuffer.h>
 #include "netlist.h"
+
+#ifdef __WXMSW__
+    #include <wx/msw/msvcrt.h>      // useful to catch memory leaks when compiling under MSVC 
+#endif
 
 // ----------------------------------------------------------------------------
 // constants
 // ----------------------------------------------------------------------------
 
 #define SV_VERSION_STR         "1.0"
+
+// IDs for the controls and the menu commands
+enum
+{
+    SpiceViewer_ShowGrid = wxID_HIGHEST+1,
+    SpiceViewer_Open = wxID_OPEN,
+    SpiceViewer_Quit = wxID_EXIT,
+    SpiceViewer_About = wxID_ABOUT
+};
 
 // ----------------------------------------------------------------------------
 // resources
@@ -76,6 +90,20 @@ public:
     { 
         m_ckt = ckt; 
         UpdateVirtualSize();
+        UpdateGraphics();
+    }
+
+    //! Updates all graphic objects cached in the current circuit (sub)objects.
+    //! This function needs to be called only on new circuit (see SetCircuit())
+    //! and in case the grid size has been changed (see OnMouseWheel()).
+    void UpdateGraphics()
+    {
+        wxGraphicsContext *gc = wxGraphicsContext::Create(this);
+        if (!gc)
+            return;
+
+        svDeviceFactory::initGraphics(gc, m_gridSize);
+        delete gc;
     }
 
     void UpdateVirtualSize()
@@ -85,17 +113,24 @@ public:
                        (rc.y+rc.height+1)*m_gridSize);
     }
 
+    void ShowGrid(bool b)
+    {
+        m_bShowGrid = b; 
+        Refresh();
+    }
+
 private:        // misc vars
     svCircuit m_ckt;
     unsigned int m_gridSize;
     wxPen m_gridPen;
+    bool m_bShowGrid;
 
 private:        // vars for dragging
     svBaseDevice* m_pDraggedDev;
     wxPoint m_ptDraggedDevOffset; // in pixel coords
     unsigned int m_idxDraggedDev;
 
-    DECLARE_EVENT_TABLE()
+    wxDECLARE_EVENT_TABLE()
 };
 
 // main application frame
@@ -108,45 +143,23 @@ public:
     void OnOpen(wxCommandEvent& event);
     void OnQuit(wxCommandEvent& event);
     void OnAbout(wxCommandEvent& event);
+    void OnShowGrid(wxCommandEvent& event);
 
 private:
     SpiceViewerCanvas* m_canvas;
 
-    DECLARE_EVENT_TABLE()
+    wxDECLARE_EVENT_TABLE()
 };
-
-
-// ----------------------------------------------------------------------------
-// constants
-// ----------------------------------------------------------------------------
-
-// IDs for the controls and the menu commands
-enum
-{
-    SpiceViewer_Open = wxID_OPEN,
-    SpiceViewer_Quit = wxID_EXIT,
-    SpiceViewer_About = wxID_ABOUT
-};
-
-// ----------------------------------------------------------------------------
-// event tables and other macros for wxWidgets
-// ----------------------------------------------------------------------------
-
-BEGIN_EVENT_TABLE(SpiceViewerFrame, wxFrame)
-    EVT_MENU(SpiceViewer_Open,  SpiceViewerFrame::OnOpen)
-    EVT_MENU(SpiceViewer_Quit,  SpiceViewerFrame::OnQuit)
-    EVT_MENU(SpiceViewer_About, SpiceViewerFrame::OnAbout)
-END_EVENT_TABLE()
-
-IMPLEMENT_APP(SpiceViewerApp)
 
 // ============================================================================
 // implementation
 // ============================================================================
 
 // ----------------------------------------------------------------------------
-// the application class
+// SpiceViewerApp - the application class
 // ----------------------------------------------------------------------------
+
+wxIMPLEMENT_APP(SpiceViewerApp)
 
 bool SpiceViewerApp::OnInit()
 {
@@ -205,24 +218,30 @@ int SpiceViewerApp::OnExit()
 }
 
 // ----------------------------------------------------------------------------
-// main frame
+// SpiceViewerFrame - main frame
 // ----------------------------------------------------------------------------
+
+wxBEGIN_EVENT_TABLE(SpiceViewerFrame, wxFrame)
+    EVT_MENU(SpiceViewer_ShowGrid,  SpiceViewerFrame::OnShowGrid)
+    EVT_MENU(SpiceViewer_Open,  SpiceViewerFrame::OnOpen)
+    EVT_MENU(SpiceViewer_Quit,  SpiceViewerFrame::OnQuit)
+    EVT_MENU(SpiceViewer_About, SpiceViewerFrame::OnAbout)
+wxEND_EVENT_TABLE()
 
 SpiceViewerFrame::SpiceViewerFrame(const wxString& title)
                             : wxFrame(NULL, wxID_ANY, title)
 {
-    // set the frame icon
-    SetIcon(wxICON(appicon));
+    SetIcon(wxICON(appicon));    // set the frame icon
 
-    // create a menu bar
     wxMenu *fileMenu = new wxMenu;
-
-    // the "About" item should be in the help menu
-    wxMenu *helpMenu = new wxMenu;
-    helpMenu->Append(SpiceViewer_About, "&About...\tF1", "Show about dialog");
+    fileMenu->AppendCheckItem(SpiceViewer_ShowGrid, "&Show grid", 
+                              "Should the grid for the devices be shown?")->Check();
     fileMenu->Append(SpiceViewer_Open, "&Open...", "Open a SPICE netlist to view");
     fileMenu->AppendSeparator();
     fileMenu->Append(SpiceViewer_Quit, "E&xit\tAlt-X", "Quit this program");
+
+    wxMenu *helpMenu = new wxMenu;
+    helpMenu->Append(SpiceViewer_About, "&About...\tF1", "Show about dialog");
 
     // now append the freshly created menu to the menu bar...
     wxMenuBar *menuBar = new wxMenuBar();
@@ -234,7 +253,7 @@ SpiceViewerFrame::SpiceViewerFrame(const wxString& title)
 
     // create a status bar just for fun (by default with 1 pane only)
     CreateStatusBar(1);
-    SetStatusText("Welcome to SPICE netlist viewer " SV_VERSION_STR "!");
+    SetStatusText("Welcome to Netlist Viewer " SV_VERSION_STR "!");
 
     // create the main canvas of this application
     // (it will get automatically linked to this frame and its size will be
@@ -242,10 +261,11 @@ SpiceViewerFrame::SpiceViewerFrame(const wxString& title)
     m_canvas = new SpiceViewerCanvas(this);
 }
 
-
-// ----------------------------------------------------------------------------
-// main frame - event handlers
-// ----------------------------------------------------------------------------
+void SpiceViewerFrame::OnShowGrid(wxCommandEvent& event)
+{
+    if (m_canvas)
+        m_canvas->ShowGrid(event.IsChecked());
+}
 
 void SpiceViewerFrame::OnOpen(wxCommandEvent& WXUNUSED(event))
 {
@@ -306,14 +326,17 @@ void SpiceViewerFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
 // SpiceViewerCanvas
 // ----------------------------------------------------------------------------
 
-BEGIN_EVENT_TABLE(SpiceViewerCanvas, wxScrolledCanvas)
+wxBEGIN_EVENT_TABLE(SpiceViewerCanvas, wxScrolledCanvas)
     EVT_PAINT(SpiceViewerCanvas::OnPaint)
 
     EVT_MOUSEWHEEL(SpiceViewerCanvas::OnMouseWheel)
     EVT_MOTION(SpiceViewerCanvas::OnMouseMove)
+
+    // left&right mouse buttons:
     EVT_LEFT_DOWN(SpiceViewerCanvas::OnMouseDown)
     EVT_LEFT_UP(SpiceViewerCanvas::OnMouseUp)
-END_EVENT_TABLE()
+    EVT_RIGHT_UP(SpiceViewerCanvas::OnMouseUp)
+wxEND_EVENT_TABLE()
 
 SpiceViewerCanvas::SpiceViewerCanvas(wxFrame *parent)
         : wxScrolledCanvas(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize,
@@ -323,15 +346,21 @@ SpiceViewerCanvas::SpiceViewerCanvas(wxFrame *parent)
     m_idxDraggedDev = wxNOT_FOUND;
     m_gridSize = 40;
     m_gridPen = wxPen(*wxLIGHT_GREY, 1, wxPENSTYLE_DOT);
+    m_bShowGrid = true;
 
     SetScrollRate(m_gridSize/10, m_gridSize/10);
     SetCursor(wxCURSOR_CROSS);
+    SetBackgroundStyle(wxBG_STYLE_CUSTOM);
 }
 
 void SpiceViewerCanvas::OnPaint(wxPaintEvent &WXUNUSED(event))
 {
+#if 1
     wxPaintDC dc(this);
     DoPrepareDC(dc);
+#else
+    wxBufferedPaintDC dc(this, wxBUFFER_VIRTUAL_AREA);
+#endif
 
     // clear our background
     dc.SetBackground(*wxWHITE_BRUSH);
@@ -341,16 +370,48 @@ void SpiceViewerCanvas::OnPaint(wxPaintEvent &WXUNUSED(event))
     dc.DrawRectangle(wxPoint(0,0), GetVirtualSize()+wxSize(1,1));
 
     // draw the grid
-    dc.SetPen(m_gridPen);
-    wxSize sz = GetVirtualSize();
-    for (int xx=0; xx<sz.GetWidth(); xx+=m_gridSize)
-        dc.DrawLine(xx, 0, xx, sz.GetHeight());
-    for (int yy=0; yy<sz.GetHeight(); yy+=m_gridSize)
-        dc.DrawLine(0, yy, sz.GetWidth(), yy);
+    if (m_bShowGrid)
+    {
+        dc.SetPen(m_gridPen);
+        wxSize sz = GetVirtualSize();
+        for (int xx=m_gridSize; xx<sz.GetWidth(); xx+=m_gridSize)
+            dc.DrawLine(xx, 0, xx, sz.GetHeight());
+        for (int yy=m_gridSize; yy<sz.GetHeight(); yy+=m_gridSize)
+            dc.DrawLine(0, yy, sz.GetWidth(), yy);
+    }
 
     // draw the schematic currently loaded
-    m_ckt.draw(dc, m_gridSize, 
-               m_pDraggedDev ? m_idxDraggedDev : wxNOT_FOUND);
+    /*m_ckt.draw(dc, m_gridSize, 
+               m_pDraggedDev ? m_idxDraggedDev : wxNOT_FOUND);*/
+    wxGraphicsContext *gc = wxGraphicsContext::Create(dc);
+    if (!gc)
+        return;
+
+    m_ckt.draw(gc, m_gridSize, m_pDraggedDev ? m_idxDraggedDev : wxNOT_FOUND);
+    delete gc;
+}
+
+void SpiceViewerCanvas::OnMouseDown(wxMouseEvent &event)
+{
+    if (m_pDraggedDev != NULL || !event.LeftDown())
+        return;
+
+    wxClientDC dc(this);
+    DoPrepareDC(dc);
+
+    wxPoint click(event.GetLogicalPosition(dc));
+    int idx = m_ckt.hitTest(wxRealPoint(click.x, click.y)/m_gridSize, 0.25);
+    if (idx == wxNOT_FOUND)
+        return;
+
+    // the device we're dragging:
+    m_pDraggedDev = m_ckt.getDevices().at(idx);
+    m_idxDraggedDev = idx;
+
+    // the offset (in pixel) between the clicked point and the reference node of the dragged device
+    m_ptDraggedDevOffset = m_pDraggedDev->getGridPosition()*m_gridSize - click;
+
+    Refresh();
 }
 
 void SpiceViewerCanvas::OnMouseMove(wxMouseEvent &event)
@@ -381,29 +442,6 @@ void SpiceViewerCanvas::OnMouseMove(wxMouseEvent &event)
     }
 }
 
-void SpiceViewerCanvas::OnMouseDown(wxMouseEvent &event)
-{
-    if (m_pDraggedDev != NULL || !event.LeftDown())
-        return;
-
-    wxClientDC dc(this);
-    DoPrepareDC(dc);
-
-    wxPoint click(event.GetLogicalPosition(dc));
-    int idx = m_ckt.hitTest(wxRealPoint(click.x, click.y)/m_gridSize, 0.25);
-    if (idx == wxNOT_FOUND)
-        return;
-
-    // the device we're dragging:
-    m_pDraggedDev = m_ckt.getDevices().at(idx);
-    m_idxDraggedDev = idx;
-
-    // the offset (in pixel) between the clicked point and the reference node of the dragged device
-    m_ptDraggedDevOffset = m_pDraggedDev->getGridPosition()*m_gridSize - click;
-
-    Refresh();
-}
-
 void SpiceViewerCanvas::OnMouseUp(wxMouseEvent &event)
 {
     if (event.LeftUp())
@@ -414,7 +452,8 @@ void SpiceViewerCanvas::OnMouseUp(wxMouseEvent &event)
     else if (event.RightUp() && m_pDraggedDev)
     {
         // rotate the device being dragged
-        //m_pDraggedDev->set
+        m_pDraggedDev->rotateClockwise();
+        Refresh();
     }
 }
 
@@ -440,6 +479,7 @@ void SpiceViewerCanvas::OnMouseWheel(wxMouseEvent &event)
     else if (m_gridSize > 150)
         m_gridSize = 150;
 
+    UpdateGraphics();
     UpdateVirtualSize();
     Refresh();
 }

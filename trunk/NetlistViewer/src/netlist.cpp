@@ -31,6 +31,9 @@
 
 #include "netlist.h"
 
+#ifdef __WXMSW__
+    #include <wx/msw/msvcrt.h>      // useful to catch memory leaks when compiling under MSVC 
+#endif
 
 /*
     For more informations about the SPICE netlist format please go to:
@@ -47,6 +50,8 @@
 // ----------------------------------------------------------------------------
  
 svBaseDeviceArray svDeviceFactory::s_registered;
+wxGraphicsPath svResistor::s_path;
+
 wxPoint svInvalidPoint = wxPoint(-1e10, -1e10);
 svNode svGroundNode = svNode("0");      // SPICE conventional name for GND
 
@@ -237,11 +242,22 @@ bool svParserSPICE::load(svCircuitArray& ret, const std::string& filename)
     wxArrayString toparse;
     for (size_t i=0; i<lines.size(); i++)
     {
+        // remove unwanted blanks from start/end of each line
         lines[i].Trim(false /* from left */);
         lines[i].Trim(true /* from right */);
 
+        // discard empty lines
+        if (lines[i].size() == 0)
+            continue;
+
         // discard comments
-        if (!lines[i].StartsWith("*") && lines[i].size() > 0)
+        if (lines[i].StartsWith("*"))
+            continue;
+
+        // + is the continuation character in SPICE syntax
+        if (lines[i].StartsWith("+"))
+            toparse.back() += lines[i].Mid(1);
+        else
             toparse.push_back(lines[i]);
     }
 
@@ -408,15 +424,16 @@ const wxRect& svCircuit::placeDevices(svPlaceAlgorithm ag)
         {
             m_devices[0]->setGridPosition(wxPoint(0,0));
 
-            wxPoint lastPt = m_devices[0]->getRightmostGridNodePosition()+wxPoint(1,0);
+            wxPoint lastPt;
+            lastPt.x = m_devices[0]->getRightmostGridNodePosition() + 1;
             for (unsigned int i=1; i<m_devices.size(); i++)
             {
-                unsigned int w = m_devices[i]->getRightmostGridNodePosition().x - 
-                                 m_devices[i]->getLeftmostGridNodePosition().x;
+                unsigned int w = m_devices[i]->getRightmostGridNodePosition() - 
+                                 m_devices[i]->getLeftmostGridNodePosition();
 
 
                 unsigned int center_offset_w = m_devices[i]->getRelativeGridNodePosition(0).x -
-                                               m_devices[i]->getLeftmostGridNodePosition().x;
+                                               m_devices[i]->getLeftmostGridNodePosition();
 
                 m_devices[i]->setGridPosition(lastPt + wxPoint(center_offset_w, 0));
 
@@ -465,7 +482,7 @@ const wxRect& svCircuit::placeDevices(svPlaceAlgorithm ag)
                             // place it to the right of the previous device so that it can be easily
                             // connected...
                             wxPoint pos = m_devices[0]->getGridPosition() + wxPoint(1,0);
-                            pos.x -= m_devices[i]->getLeftmostGridNodePosition().x;
+                            pos.x -= m_devices[i]->getLeftmostGridNodePosition();
                             pos.y += m_devices[i]->getRelativeGridNodePosition(temp).y;
                             m_devices[i]->setGridPosition(pos);
                             break;
@@ -484,8 +501,9 @@ const wxRect& svCircuit::placeDevices(svPlaceAlgorithm ag)
     wxPoint offset;
     for (size_t i=0; i<m_devices.size(); i++)
     {
-        offset.x = std::min(offset.x, m_devices[i]->getLeftmostGridNodePosition().x);
-        offset.y = std::min(offset.y, m_devices[i]->getGridPosition().y);
+        wxPoint pt = m_devices[i]->getGridPosition();
+        offset.x = std::min(offset.x, pt.x + m_devices[i]->getLeftmostGridNodePosition());
+        offset.y = std::min(offset.y, pt.y + m_devices[i]->getTopmostGridNodePosition());
     }
     offset = wxPoint(2,2) + offset*(-1);
 
@@ -502,13 +520,14 @@ void svCircuit::updateBoundingBox()
     for (size_t i=0; i<m_devices.size(); i++)
     {
         m_bb.x = std::min(m_devices[i]->getGridPosition().x +
-                        m_devices[i]->getLeftmostGridNodePosition().x, m_bb.x);
-        m_bb.y = std::min(m_devices[i]->getGridPosition().y, m_bb.y);
+                          m_devices[i]->getLeftmostGridNodePosition(), m_bb.x);
+        m_bb.y = std::min(m_devices[i]->getGridPosition().y +
+                          m_devices[i]->getTopmostGridNodePosition(), m_bb.y);
 
         m_bb.width = std::max(m_devices[i]->getGridPosition().x +
-                        m_devices[i]->getRightmostGridNodePosition().x, m_bb.width);
+                              m_devices[i]->getRightmostGridNodePosition(), m_bb.width);
         m_bb.height = std::max(m_devices[i]->getGridPosition().y +
-                        m_devices[i]->getBottommostGridNodePosition().y, m_bb.height);
+                               m_devices[i]->getBottommostGridNodePosition(), m_bb.height);
     }
 
     m_bb.width -= m_bb.x;
@@ -545,20 +564,43 @@ void svCircuit::draw(wxDC& dc, unsigned int gridSize, int selectedDevice) const
     }
 
     // draw an "airwire" for each device node
-    dc.SetPen(*wxGREEN_PEN);
+    const wxPen* wirePens[] = 
+    {
+        wxBLUE_PEN,
+        wxCYAN_PEN,
+        wxGREEN_PEN,
+        wxYELLOW_PEN,
+        wxGREY_PEN,
+        wxLIGHT_GREY_PEN,
+        wxMEDIUM_GREY_PEN,
+        wxRED_PEN
+    };
+
+    //dc.SetPen(*wxGREEN_PEN);
+    unsigned int idx = 0;
     for (std::set<svNode>::const_iterator i=m_nodes.begin(); i != m_nodes.end(); i++)
     {
         if (*i != svGroundNode)
         {
+            dc.SetPen(*wirePens[idx++]);
+            if (idx == WXSIZEOF(wirePens))
+                idx = 0;
+
             // TO-OPTIMIZE: we may scan the device list and then each device's node and 
             //              put the device's node relative position in an array indexed by
             //              the node's name (single pass on each device's node and we have
             //              the data organized as we need).
             std::vector<wxPoint> arrConnectedNodes = getDeviceNodesConnectedTo(*i);
+#if 0
             for (size_t j=0; j<arrConnectedNodes.size(); j++)
                 for (size_t k=0; k<arrConnectedNodes.size(); k++)
                     if (k != j)
                         dc.DrawLine(arrConnectedNodes[j]*gridSize, arrConnectedNodes[k]*gridSize);
+#else
+            // TODO: we should find the spanning tree over the graph formed by the nodes in arrConnectedNodes
+            for (size_t j=1; j<arrConnectedNodes.size(); j++)
+                        dc.DrawLine(arrConnectedNodes[j-1]*gridSize, arrConnectedNodes[j]*gridSize);
+#endif
         }
     }
 }

@@ -21,9 +21,14 @@
 #include <string>
 #include <set>
 
+#include <wx/graphics.h>
 #include <boost/graph/adjacency_matrix.hpp>
 
 #include "schematic.h"
+
+#ifdef __WXMSW__
+    #include <wx/msw/msvcrt.h>      // useful to catch memory leaks when compiling under MSVC 
+#endif
 
 // ----------------------------------------------------------------------------
 // typedefs & enums
@@ -39,10 +44,10 @@ typedef std::vector<svCircuit> svCircuitArray;
 
 enum svRotation
 {
-    SVR_0,      //!< no rotation.
-    SVR_90,     //!< 90 degrees clockwise rotation.
-    SVR_180,    //!< 180 degrees clockwise rotation.
-    SVR_270     //!< 270 degrees clockwise rotation.
+    SVR_0 = 0,      //!< no rotation.
+    SVR_90 = 1,     //!< 90 degrees clockwise rotation.
+    SVR_180 = 2,    //!< 180 degrees clockwise rotation.
+    SVR_270 = 3     //!< 270 degrees clockwise rotation.
 };
 
 enum svPlaceAlgorithm
@@ -90,6 +95,15 @@ protected:
     //! (see the drawing functions).
     //! NOTE: the contained coordinates can be negative.
     wxPoint m_position;
+
+    //! The rotation of this device respect its standard orientation.
+    svRotation m_rotation;
+
+public:
+    svBaseDevice()
+        {
+            m_rotation = SVR_0;
+        }
 
 public:     // misc functions
 
@@ -159,11 +173,25 @@ public:     // drawing functions
     //            are instead points referred to a specific grid spacing and are always
     //            positive.
 
+    //! Called once before calling draw().
+    //! This function should optimize drawing by preparing/caching all graphic objects so that
+    //! multiple draw() calls done later are executed faster.
+    //! This function needs to be called only once for each 
+    //virtual void initGraphics(wxGraphicsContext* gc, unsigned int gridSpacing) {}// = 0;
+
     //! Draws this device on the given DC placing the first node of the device at
     //! the given grid position. Note that the conversion between the grid position 'x'
     //! and the pixel position 'y' is computed as:
     //!     y = x*gridSpacing;
     virtual void draw(wxDC& dc, unsigned int gridSpacing, const wxPen& pen) const = 0;
+    virtual void draw(wxGraphicsContext* gc, unsigned int gridSpacing, const wxPen& pen) const {}
+
+    //! Draws a straight line on the given graphic path.
+    static void drawLine(wxGraphicsPath& path, const wxRealPoint& pt1, const wxRealPoint& pt2)
+        {
+            path.MoveToPoint(pt1.x, pt1.y);
+            path.AddLineToPoint(pt2.x, pt2.y);
+        }
 
     //! Returns the grid position (relative to zero-th node) for the given node index
     //! (which should always be < getNodesCount()).
@@ -183,11 +211,10 @@ public:     // drawing functions
             return svInvalidPoint; 
         }
 
-    // NOTE: first node (the reference node) must always be the topmost node!
-
-    virtual wxPoint getLeftmostGridNodePosition() const = 0;
-    virtual wxPoint getRightmostGridNodePosition() const = 0;
-    virtual wxPoint getBottommostGridNodePosition() const = 0;
+    virtual int getTopmostGridNodePosition() const = 0;
+    virtual int getLeftmostGridNodePosition() const = 0;
+    virtual int getRightmostGridNodePosition() const = 0;
+    virtual int getBottommostGridNodePosition() const = 0;
 
     //! Returns a value between 0 and 1 which indicates the caller the "predisposition" 
     //! of this device to be drawn with the given rotation.
@@ -197,6 +224,28 @@ public:     // drawing functions
     //! equally ok to draw the device in those rotation values.
     virtual double getRotationPredisposition(svRotation rot) const
         { return 1; }
+
+    //! Sets the rotation value for this device.
+    void setRotation(svRotation rot)
+        { m_rotation=rot; }
+
+    //! Rotates this device clockwise.
+    void rotateClockwise()
+        {
+            if (m_rotation == SVR_270)
+                m_rotation = SVR_0;
+            else
+                m_rotation = svRotation(int(m_rotation)+1);
+        }
+
+    //! Rotates this device counter clockwise.
+    void rotateCounterClockwise()
+        {
+            if (m_rotation == SVR_0)
+                m_rotation = SVR_270;
+            else
+                m_rotation = svRotation(int(m_rotation)-1);
+        }
 
     //! Returns the current position of this device in the grid
     //! (the position returned is the position of the reference node = first node).
@@ -336,9 +385,23 @@ public:     // drawing functions
     const wxRect& getBoundingBox() const
         { return m_bb; }
 
+    /*
+    void initGraphics(wxGraphicsContext* gc, unsigned int gridSpacing)
+    {
+        for (size_t i=0; i<m_devices.size(); i++)
+            m_devices[i]->initGraphics(gc, gridSpacing);
+    }*/
+
     //! Draws this circuit on the given DC, with the given grid size
     //! (in pixels).
     void draw(wxDC& dc, unsigned int gridSize, int selectedDevice = wxNOT_FOUND) const;
+
+    void draw(wxGraphicsContext* gc, unsigned int gridSpacing, int selectedDevice = wxNOT_FOUND) const
+    {
+        wxPen normal(*wxBLACK, 2);
+        for (size_t i=0; i<m_devices.size(); i++)
+            m_devices[i]->draw(gc, gridSpacing, normal);
+    }
 
     //! Returns the index of the first device whose (absolute) center point
     //! lies in the given rectangle.
@@ -379,6 +442,7 @@ public:
 //! Abstract class which represents resistors, capacitors, inductors.
 class svPassiveDevice : public svBaseDevice
 {
+protected:
     //! The characteristic value of this device (e.g. resistance or capacitance).
     double m_value;
 
@@ -387,6 +451,12 @@ class svPassiveDevice : public svBaseDevice
 
     //! The model name for this device.
     std::string m_modelName;
+
+    // functions used by static initGraphics() functions of derived classes...
+    // i.e. these ones do not need to take the rotation in account
+    // (rotations are handled by draw() functions!)
+    static wxRealPoint getFirstGridNodePosition() { return wxRealPoint(0,0); }
+    static wxRealPoint getSecondGridNodePosition() { return wxRealPoint(0,1); }
 
 public:
     svPassiveDevice()
@@ -401,13 +471,23 @@ public:
         // default orientation: vertical
         wxASSERT(nodeIdx >= 0 && nodeIdx <= 1);
         if (nodeIdx == 0) return wxPoint(0,0);
-        if (nodeIdx == 1) return wxPoint(0,1);
+        if (nodeIdx == 1)
+        {
+            switch (m_rotation)
+            {
+            case SVR_0: return wxPoint(0,1);
+            case SVR_90: return wxPoint(-1,0);
+            case SVR_180: return wxPoint(0,-1);
+            case SVR_270: return wxPoint(1,0);
+            }
+        }
         return svInvalidPoint;
     }
 
-    wxPoint getLeftmostGridNodePosition() const { return wxPoint(0,0); }
-    wxPoint getRightmostGridNodePosition() const { return wxPoint(0,0); }
-    wxPoint getBottommostGridNodePosition() const { return wxPoint(0,1); }
+    int getTopmostGridNodePosition() const { return m_rotation == SVR_180 ? -1 : 0; }
+    int getLeftmostGridNodePosition() const { return m_rotation == SVR_90 ? -1 : 0; }
+    int getRightmostGridNodePosition() const { return m_rotation == SVR_270 ? +1 : 0; }
+    int getBottommostGridNodePosition() const { return m_rotation == SVR_0 ? +1 : 0; }
 
     // SPICE line for such kind of devices is something like:
     //   L|C|R{name} {+node} {-node} [model] {value} [IC={initial}]  
@@ -455,6 +535,10 @@ public:
     char getSPICEid() const { return 'C'; }
     std::string getHumanReadableDesc() const { return "CAPACITOR"; }
     svBaseDevice* clone() const { return new svCapacitor(*this); }
+
+    static void initGraphics(wxGraphicsContext* gc, unsigned int gridSpacing)
+    {
+    }
     
     void draw(wxDC& dc, unsigned int gridSpacing, const wxPen& pen) const
     {
@@ -475,6 +559,9 @@ public:
 
 class svResistor : public svPassiveDevice
 {
+    //! The graphics path. Filled by initGraphics(), it's used by draw() for painting.
+    static wxGraphicsPath s_path;
+
 public:
     svResistor() {}
 
@@ -482,25 +569,42 @@ public:
     std::string getHumanReadableDesc() const { return "RESISTOR"; }
     svBaseDevice* clone() const { return new svResistor(*this); }
 
-    void draw(wxDC& dc, unsigned int gridSpacing, const wxPen& pen) const
+    static void initGraphics(wxGraphicsContext* gc, unsigned int gridSpacing)
     {
-        wxPoint firstNodePos = m_position*gridSpacing;
-        wxPoint secondNodePos = (m_position + getRelativeGridNodePosition(1))*gridSpacing;
-        int w = gridSpacing/7, l = gridSpacing/7;
+        const wxRealPoint& firstNodePos = getFirstGridNodePosition();
+        const wxRealPoint& secondNodePos = getSecondGridNodePosition()*gridSpacing;
+        double w = gridSpacing/7.0, 
+               l = gridSpacing/7.0;
 
-        dc.SetPen(pen);
-        dc.DrawLine(firstNodePos, firstNodePos + wxPoint(0, l));
-        dc.DrawLine(firstNodePos + wxPoint(0, l), firstNodePos + wxPoint(w, 2*l));
-        dc.DrawLine(firstNodePos + wxPoint(w, 2*l), firstNodePos + wxPoint(-w, 3*l));
-        dc.DrawLine(firstNodePos + wxPoint(-w, 3*l), firstNodePos + wxPoint(w, 4*l));
-        dc.DrawLine(firstNodePos + wxPoint(w, 4*l), firstNodePos + wxPoint(-w, 5*l));
-        dc.DrawLine(firstNodePos + wxPoint(-w, 5*l), firstNodePos + wxPoint(0, 6*l));
-        dc.DrawLine(firstNodePos + wxPoint(0, 6*l), secondNodePos);
+        s_path = gc->CreatePath();
+        wxASSERT(!s_path.IsNull());
 
-        dc.SetTextBackground(wxNullColour);
-        dc.SetTextForeground(pen.GetColour());
-        dc.DrawText(getSPICEid() + getName(), firstNodePos + wxPoint(2*w, 3*l));
+        drawLine(s_path, firstNodePos, firstNodePos + wxRealPoint(0, l));
+        drawLine(s_path, firstNodePos + wxRealPoint(0, l), firstNodePos + wxRealPoint(w, 2*l));
+        drawLine(s_path, firstNodePos + wxRealPoint(w, 2*l), firstNodePos + wxRealPoint(-w, 3*l));
+        drawLine(s_path, firstNodePos + wxRealPoint(-w, 3*l), firstNodePos + wxRealPoint(w, 4*l));
+        drawLine(s_path, firstNodePos + wxRealPoint(w, 4*l), firstNodePos + wxRealPoint(-w, 5*l));
+        drawLine(s_path, firstNodePos + wxRealPoint(-w, 5*l), firstNodePos + wxRealPoint(0, 6*l));
+        drawLine(s_path, firstNodePos + wxRealPoint(0, 6*l), secondNodePos);
     }
+
+    void draw(wxGraphicsContext* gc, unsigned int gridSpacing, const wxPen& pen) const
+    {
+        gc->SetPen(pen);
+
+        // create the transformation matrix for the translation & rotation required
+        // by this specific instance:
+        wxGraphicsMatrix m = gc->CreateMatrix();
+        m.Translate(m_position.x*gridSpacing, m_position.y*gridSpacing);
+        m.Rotate(int(m_rotation)*M_PI/2);
+        gc->SetTransform(m);
+
+        // draw!
+        gc->StrokePath(s_path);
+    }
+
+    void draw(wxDC& dc, unsigned int gridSpacing, const wxPen& pen) const
+    {}
 };
 
 class svInductor : public svPassiveDevice
@@ -521,11 +625,11 @@ public:
 
         dc.SetPen(pen);
         dc.DrawLine(firstNodePos, firstNodePos + wxPoint(0, l));
+        dc.DrawLine(secondNodePos + wxPoint(0, -l), secondNodePos);
+        dc.SetBrush(*wxTRANSPARENT_BRUSH);
         dc.DrawArc(firstNodePos + wxPoint(0, 2*l), firstNodePos + wxPoint(0, l), firstNodePos + wxPoint(0, 1.5*l));
         dc.DrawArc(secondNodePos + wxPoint(0, -l), secondNodePos + wxPoint(0, -2*l), secondNodePos + wxPoint(0, -1.5*l));
         dc.DrawArc(middleNodePos + wxPoint(0, l/2), middleNodePos + wxPoint(0, -l/2), middleNodePos);
-
-        dc.DrawLine(secondNodePos + wxPoint(0, -l), secondNodePos);
     }
 };
 
@@ -591,9 +695,10 @@ public:
         return svInvalidPoint;
     }
 
-    wxPoint getLeftmostGridNodePosition() const { return wxPoint(-1,1); }
-    wxPoint getRightmostGridNodePosition() const { return wxPoint(0,0); }
-    wxPoint getBottommostGridNodePosition() const { return wxPoint(0,2); }
+    int getTopmostGridNodePosition() const { return 0; }
+    int getLeftmostGridNodePosition() const { return -1; }
+    int getRightmostGridNodePosition() const { return 0; }
+    int getBottommostGridNodePosition() const { return 2; }
 
     // SPICE line for such kind of devices is something like:
     //    J{name} {d} {g} {s} {model} [{area]} 
@@ -753,9 +858,10 @@ public:
         return svInvalidPoint;
     }
 
-    wxPoint getLeftmostGridNodePosition() const { return wxPoint(0,0); }
-    wxPoint getRightmostGridNodePosition() const { return wxPoint(0,0); }
-    wxPoint getBottommostGridNodePosition() const { return wxPoint(0,1); }
+    int getTopmostGridNodePosition() const { return 0; }
+    int getLeftmostGridNodePosition() const { return 0; }
+    int getRightmostGridNodePosition() const { return 0; }
+    int getBottommostGridNodePosition() const { return 1; }
 };
 
 /*
@@ -787,11 +893,16 @@ public:
 
         dc.SetPen(pen);
         dc.DrawLine(firstNodePos, secondNodePos);
+        dc.SetBrush(*wxWHITE_BRUSH);
+        dc.SetBackgroundMode(wxSOLID);
         dc.DrawCircle((firstNodePos+secondNodePos)/2, r);
 
-        dc.SetTextBackground(wxNullColour);
-        dc.SetTextForeground(pen.GetColour());
-        dc.DrawText(getSPICEid() + getName(), (firstNodePos+secondNodePos)/2 - 0.7*wxPoint(r,r));
+        wxString str = getSPICEid() + getName();
+        wxSize sz = dc.GetTextExtent(str);
+        dc.SetFont(*wxSWISS_FONT);
+        dc.SetBackgroundMode(wxTRANSPARENT);
+        dc.SetTextForeground(pen.GetColour());  
+        dc.DrawText(str, (firstNodePos+secondNodePos)/2 - wxPoint(sz.GetWidth()/2, sz.GetHeight()/2));
     }
 
     // SPICE line for such kind of devices is something like:
@@ -1044,6 +1155,21 @@ public:
             svDeviceFactory::registerDevice(new svJFET);
             svDeviceFactory::registerDevice(new svGSource);
             svDeviceFactory::registerDevice(new svESource);
+        }
+
+    static void initGraphics(wxGraphicsContext* gc, unsigned int gridSpacing)
+        {
+            svCapacitor::initGraphics(gc, gridSpacing);
+            svResistor::initGraphics(gc, gridSpacing);
+            /*svInductor::initGraphics(gc, gridSpacing);
+            svDiode::initGraphics(gc, gridSpacing);
+            svISource::initGraphics(gc, gridSpacing);
+            svVSource::initGraphics(gc, gridSpacing);
+            svMOS::initGraphics(gc, gridSpacing);
+            svBJT::initGraphics(gc, gridSpacing);
+            svJFET::initGraphics(gc, gridSpacing);
+            svGSource::initGraphics(gc, gridSpacing);
+            svESource::initGraphics(gc, gridSpacing);*/
         }
 
     static void unregisterAllDevices()
