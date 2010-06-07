@@ -50,7 +50,10 @@
 // ----------------------------------------------------------------------------
  
 svBaseDeviceArray svDeviceFactory::s_registered;
+wxGraphicsPath svCapacitor::s_path;
 wxGraphicsPath svResistor::s_path;
+wxGraphicsPath svInductor::s_path;
+wxGraphicsPath svDiode::s_path;
 
 wxPoint svInvalidPoint = wxPoint(-1e10, -1e10);
 svNode svGroundNode = svNode("0");      // SPICE conventional name for GND
