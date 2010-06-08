@@ -54,6 +54,14 @@ wxGraphicsPath svCapacitor::s_path;
 wxGraphicsPath svResistor::s_path;
 wxGraphicsPath svInductor::s_path;
 wxGraphicsPath svDiode::s_path;
+wxGraphicsPath svMOS::s_path;
+wxGraphicsPath svMOS::s_pathArrow;
+wxGraphicsPath svBJT::s_path;
+wxGraphicsPath svBJT::s_pathArrow;
+wxGraphicsPath svSource::s_pathIndipendent;
+wxGraphicsPath svSource::s_pathDipendent;
+wxGraphicsPath svSource::s_pathCurrentArrow;
+wxGraphicsPath svSource::s_pathVoltageSigns;
 
 wxPoint svInvalidPoint = wxPoint(-1e10, -1e10);
 svNode svGroundNode = svNode("0");      // SPICE conventional name for GND
@@ -537,33 +545,44 @@ void svCircuit::updateBoundingBox()
     m_bb.height -= m_bb.y;
 }
 
-void svCircuit::draw(wxDC& dc, unsigned int gridSize, int selectedDevice) const
+void svCircuit::draw(wxGraphicsContext* gc, unsigned int gridSize, int selectedDevice) const
 {
+    static wxGraphicsPath pathGround;
+
+    if (pathGround.IsNull())
+    {
+        pathGround = gc->CreatePath();
+
+        double w = gridSize/3.0, d = gridSize/10.0;
+        drawLine(pathGround, wxRealPoint(-w,0), wxRealPoint(w,0));
+        drawLine(pathGround, wxRealPoint(-w*2/4,d), wxRealPoint(w*2/4,d));
+        drawLine(pathGround, wxRealPoint(-w*1/4,2*d), wxRealPoint(w*1/4,2*d));
+    }
+
     // draw all the devices
     wxPen normal(*wxBLACK, 2),
           selected(*wxRED, 2);
+    gc->SetFont(*wxSWISS_FONT, *wxBLACK);
     for (size_t i=0; i<m_devices.size(); i++)
     {
-        m_devices[i]->draw(dc, gridSize, selectedDevice == i ? selected : normal);
+        m_devices[i]->draw(gc, gridSize, selectedDevice == i ? selected : normal);
 
         // decorate the nodes of this device
-        dc.SetBackgroundMode(wxTRANSPARENT);
         for (size_t j=0; j<m_devices[i]->getNodesCount(); j++)
         {
-            wxPoint nodePos = 
+            wxRealPoint nodePos = 
                 (m_devices[i]->getGridPosition() + m_devices[i]->getRelativeGridNodePosition(j))*gridSize;
 
+            // reset the transformation matrix
+            wxGraphicsMatrix m = gc->CreateMatrix();
+            m.Translate(nodePos.x, nodePos.y);
+            gc->SetTransform(m);
+
             if (m_devices[i]->getNode(j) == svGroundNode)
-            {
-                int w = gridSize/3, d = gridSize/10;
-                dc.DrawLine(nodePos + wxPoint(-w,0), nodePos + wxPoint(w,0));
-                dc.DrawLine(nodePos + wxPoint(-w*2/4,d), nodePos + wxPoint(w*2/4,d));
-                dc.DrawLine(nodePos + wxPoint(-w*1/4,2*d), nodePos + wxPoint(w*1/4,2*d));
-            }
+                gc->StrokePath(pathGround);
             else
-                dc.DrawText(m_devices[i]->getNode(j), nodePos);
+                gc->DrawText(m_devices[i]->getNode(j), 0, 0, 0);
         }
-        dc.SetBackgroundMode(wxSOLID);
     }
 
     // draw an "airwire" for each device node
@@ -579,13 +598,15 @@ void svCircuit::draw(wxDC& dc, unsigned int gridSize, int selectedDevice) const
         wxRED_PEN
     };
 
-    //dc.SetPen(*wxGREEN_PEN);
+    // reset transformation matrix:
+    gc->SetTransform(gc->CreateMatrix());
+
     unsigned int idx = 0;
     for (std::set<svNode>::const_iterator i=m_nodes.begin(); i != m_nodes.end(); i++)
     {
         if (*i != svGroundNode)
         {
-            dc.SetPen(*wirePens[idx++]);
+            gc->SetPen(*wirePens[idx++]);
             if (idx == WXSIZEOF(wirePens))
                 idx = 0;
 
@@ -602,7 +623,7 @@ void svCircuit::draw(wxDC& dc, unsigned int gridSize, int selectedDevice) const
 #else
             // TODO: we should find the spanning tree over the graph formed by the nodes in arrConnectedNodes
             for (size_t j=1; j<arrConnectedNodes.size(); j++)
-                        dc.DrawLine(arrConnectedNodes[j-1]*gridSize, arrConnectedNodes[j]*gridSize);
+                drawLine(gc, arrConnectedNodes[j-1]*gridSize, arrConnectedNodes[j]*gridSize);
 #endif
         }
     }
