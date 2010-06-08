@@ -128,7 +128,7 @@ private:        // misc vars
 private:        // vars for dragging
     svBaseDevice* m_pDraggedDev;
     wxPoint m_ptDraggedDevOffset; // in pixel coords
-    unsigned int m_idxDraggedDev;
+    int m_idxDraggedDev;
 
     wxDECLARE_EVENT_TABLE()
 };
@@ -380,13 +380,11 @@ void SpiceViewerCanvas::OnPaint(wxPaintEvent &WXUNUSED(event))
             dc.DrawLine(0, yy, sz.GetWidth(), yy);
     }
 
-    // draw the schematic currently loaded
-    /*m_ckt.draw(dc, m_gridSize, 
-               m_pDraggedDev ? m_idxDraggedDev : wxNOT_FOUND);*/
     wxGraphicsContext *gc = wxGraphicsContext::Create(dc);
     if (!gc)
         return;
 
+    // draw the schematic currently loaded
     m_ckt.draw(gc, m_gridSize, m_pDraggedDev ? m_idxDraggedDev : wxNOT_FOUND);
     delete gc;
 }
