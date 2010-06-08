@@ -35,6 +35,7 @@
     <exe id="spice_viewer" template="wxgui,wxlike">
         <exename>SpiceViewer</exename>
         <dirname>../..</dirname>
+        <warnings>max</warnings>
     
         <include>src</include>
         <include>$(BOOST_DIR)</include>

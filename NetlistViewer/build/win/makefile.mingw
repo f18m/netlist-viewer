@@ -50,12 +50,11 @@ COMPILER_PREFIX = gcc
 SPICE_VIEWER_CXXFLAGS = -DHAVE_W32API_H $(____WX_SHARED_0_p) -D_UNICODE \
 	$(__WXDEBUG_DEFINE_p) -D__WXMSW__ \
 	-I$(WX_DIR)$(WXLIBPATH)\msw$(WXLIBPOSTFIX) -I$(WX_DIR)\include \
-	$(____spice_viewer__OPT_2) $(____spice_viewer__DEBUGINFO) -Isrc \
+	$(____spice_viewer__OPT_2) $(____spice_viewer__DEBUGINFO) -W -Wall -Isrc \
 	-I$(BOOST_DIR) $(CPPFLAGS) $(CXXFLAGS)
 SPICE_VIEWER_OBJECTS =  \
 	$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_app.o \
 	$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_netlist.o \
-	$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_schematic.o \
 	$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_resources_rc.o
 
 ### Conditionally set variables: ###
@@ -145,9 +144,6 @@ $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_app.
 	$(CXX) -c -o $@ $(SPICE_VIEWER_CXXFLAGS) $(CPPDEPS) $<
 
 $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_netlist.o: ../../src/netlist.cpp
-	$(CXX) -c -o $@ $(SPICE_VIEWER_CXXFLAGS) $(CPPDEPS) $<
-
-$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_schematic.o: ../../src/schematic.cpp
 	$(CXX) -c -o $@ $(SPICE_VIEWER_CXXFLAGS) $(CPPDEPS) $<
 
 $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_resources_rc.o: ../../src/resources.rc

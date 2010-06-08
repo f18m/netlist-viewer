@@ -61,12 +61,11 @@ SPICE_VIEWER_CXXFLAGS = /MD$(____spice_viewer__DEBUGINFO_9) /DWIN32 \
 	/I$(WX_DIR)$(__WXLIBPATH_FILENAMES)\msw$(WXLIBPOSTFIX) \
 	/I$(WX_DIR)\include /D_WINDOWS $(____spice_viewer__OPT_5) \
 	$(____spice_viewer__DEBUGINFO_6) $(______spice_viewer__DEBUGINFO_8_p) \
-	/Fd..\..\SpiceViewer.pdb /Isrc /I$(BOOST_DIR) /GR /EHsc $(CPPFLAGS) \
+	/Fd..\..\SpiceViewer.pdb /W4 /Isrc /I$(BOOST_DIR) /GR /EHsc $(CPPFLAGS) \
 	$(CXXFLAGS)
 SPICE_VIEWER_OBJECTS =  \
 	$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_app.obj \
-	$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_netlist.obj \
-	$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_schematic.obj
+	$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_netlist.obj
 SPICE_VIEWER_RESOURCES =  \
 	$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_resources.res
 
@@ -229,9 +228,6 @@ $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_app.
 
 $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_netlist.obj: ..\..\src\netlist.cpp
 	$(CXX) /c /nologo /TP /Fo$@ $(SPICE_VIEWER_CXXFLAGS) ..\..\src\netlist.cpp
-
-$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_schematic.obj: ..\..\src\schematic.cpp
-	$(CXX) /c /nologo /TP /Fo$@ $(SPICE_VIEWER_CXXFLAGS) ..\..\src\schematic.cpp
 
 $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_resources.res: ..\..\src\resources.rc
 	rc /fo$@  /d WIN32 $(____WX_SHARED_2_p_1) /d _UNICODE $(__WXDEBUG_DEFINE_p_1) /d __WXMSW__ /i $(WX_DIR)$(__WXLIBPATH_FILENAMES_1)\msw$(WXLIBPOSTFIX) /i $(WX_DIR)\include /d _WINDOWS $(______spice_viewer__DEBUGINFO_8_p_1) /i src /i $(BOOST_DIR) ..\..\src\resources.rc
