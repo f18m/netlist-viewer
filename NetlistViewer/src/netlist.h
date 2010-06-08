@@ -24,8 +24,6 @@
 #include <wx/graphics.h>
 #include <boost/graph/adjacency_matrix.hpp>
 
-#include "schematic.h"
-
 #ifdef __WXMSW__
     #include <wx/msw/msvcrt.h>      // useful to catch memory leaks when compiling under MSVC 
 #endif
@@ -62,18 +60,18 @@ enum svPlaceAlgorithm
 extern wxPoint svInvalidPoint;
 extern svNode svGroundNode;
 
-    //! Graphic helper; draws a straight line on the given graphic path.
-    static void drawLine(wxGraphicsPath& path, const wxRealPoint& pt1, const wxRealPoint& pt2)
-        {
-            path.MoveToPoint(pt1.x, pt1.y);
-            path.AddLineToPoint(pt2.x, pt2.y);
-        }
+//! Graphic helper; draws a straight line on the given graphic path.
+static void drawLine(wxGraphicsPath& path, const wxRealPoint& pt1, const wxRealPoint& pt2)
+{
+    path.MoveToPoint(pt1.x, pt1.y);
+    path.AddLineToPoint(pt2.x, pt2.y);
+}
 
-    //! Graphic helper; draws a straight line on the given graphic path.
-    static void drawLine(wxGraphicsContext* gc, const wxRealPoint& pt1, const wxRealPoint& pt2)
-        {
-            gc->StrokeLine(pt1.x, pt1.y, pt2.x, pt2.y);
-        }
+//! Graphic helper; draws a straight line on the given graphic path.
+static void drawLine(wxGraphicsContext* gc, const wxRealPoint& pt1, const wxRealPoint& pt2)
+{
+    gc->StrokeLine(pt1.x, pt1.y, pt2.x, pt2.y);
+}
 
 
 // ----------------------------------------------------------------------------
@@ -236,7 +234,7 @@ public:     // drawing functions
     //! A return value of one means that given rotation is ok.
     //! If the device returns the same value for multiple rotation values, it means that it's
     //! equally ok to draw the device in those rotation values.
-    virtual double getRotationPredisposition(svRotation rot) const
+    virtual double getRotationPredisposition(svRotation /*rot*/) const
         { return 1; }
 
     //! Sets the rotation value for this device.
@@ -292,7 +290,7 @@ class svCircuit
     //! The name of this circuit.
     std::string m_name;
 
-    //! The array of electrical nodes.
+    //! The array of electrical (internal) nodes.
     //! Each node is connected to one or more device nodes.
     std::set<svNode> m_nodes;
 
@@ -347,7 +345,12 @@ public:
 
 public:     // node & device management functions
 
-    //! Adds a node to this subcircuit (unless a node with the same name already exists!).
+    //! Adds an external node to this subcircuit.
+    //! An external node can be connected to the network outside the subcircuit;
+    //! all other internal nodes cannot be connected to an external network.
+    void addExternalNode(const svNode& extNode);
+
+    //! Adds an internal node to this subcircuit (unless a node with the same name already exists!).
     void addNode(const svNode& name)
         { m_nodes.insert(name); }
 
@@ -406,7 +409,7 @@ public:     // drawing functions
 
     //! Returns the index of the first device whose (absolute) center point
     //! lies in the given rectangle.
-    unsigned int hitTest(const wxRealPoint& gridPt, double tolerance) const
+    int hitTest(const wxRealPoint& gridPt, double tolerance) const
     {
         for (size_t i=0; i<m_devices.size(); i++)
         {
@@ -435,6 +438,62 @@ public:
     bool load(svCircuitArray& ret, const std::string& filename);
 };
 
+// ----------------------------------------------------------------------------
+// external pin device
+// ----------------------------------------------------------------------------
+
+class svExternalPin : public svBaseDevice
+{
+    //! The graphics path. Filled by initGraphics(), it's used by draw() for painting.
+    static wxGraphicsPath s_path;
+
+public:
+    svExternalPin(const svNode& node = "")
+        { addNode(node); m_name = node; }
+
+    unsigned int getNodesCount() const { return 1; }
+
+    wxPoint getRelativeGridNodePosition(unsigned int nodeIdx) const
+    {
+        wxASSERT(nodeIdx == 0);
+        if (nodeIdx == 0) 
+            return wxPoint(0,0);
+        return svInvalidPoint;
+    }
+
+    int getTopmostGridNodePosition() const { return 0; }
+    int getLeftmostGridNodePosition() const { return 0; }
+    int getRightmostGridNodePosition() const { return 0; }
+    int getBottommostGridNodePosition() const { return 0; }
+
+    bool parseSPICEProperty(unsigned int WXUNUSED(j), const std::string& WXUNUSED(prop))
+    {
+        return false;
+    }
+
+    char getSPICEid() const { return 0; }
+    std::string getHumanReadableDesc() const { return "EXTERNAL PIN"; }
+    svBaseDevice* clone() const { return new svExternalPin(*this); }
+
+    static void initGraphics(wxGraphicsContext* gc, unsigned int gridSpacing)
+    {
+        wxRealPoint nodePos(0,0);
+        double l = gridSpacing/4.0;
+
+        s_path = gc->CreatePath();
+        wxASSERT(!s_path.IsNull());
+
+        // draw wires
+        drawLine(s_path, nodePos, nodePos + wxRealPoint(0, -l));
+        s_path.AddCircle(nodePos.x, nodePos.y-2*l, l);
+    }
+    
+    void draw(wxGraphicsContext* gc, unsigned int gridSpacing, const wxPen& pen) const
+    {
+        setupGC(gc, gridSpacing, pen);
+        gc->StrokePath(s_path);
+    }
+};
 
 // ----------------------------------------------------------------------------
 // passive devices
@@ -628,8 +687,7 @@ public:
     {
         const wxRealPoint& firstNodePos = getFirstGridNodePosition();
         const wxRealPoint& secondNodePos = getSecondGridNodePosition()*gridSpacing;
-        double w = gridSpacing/7.0, 
-               l = gridSpacing/4.5;
+        double l = gridSpacing/4.5;
 
         s_path = gc->CreatePath();
         wxASSERT(!s_path.IsNull());
@@ -667,7 +725,6 @@ public:
     static void initGraphics(wxGraphicsContext* gc, unsigned int gridSpacing)
     {
         const wxRealPoint& firstNodePos = getFirstGridNodePosition();
-        const wxRealPoint& secondNodePos = getSecondGridNodePosition()*gridSpacing;
         double w = gridSpacing/3.0, 
                l = gridSpacing/3.0;
 
@@ -828,8 +885,7 @@ public:
         const wxRealPoint& drainPos = getDrainGridNodePosition();
         const wxRealPoint& gatePos = getGateGridNodePosition()*gridSpacing;
         const wxRealPoint& sourcePos = getSourceGridNodePosition()*gridSpacing;
-        double w = gridSpacing/3.0, 
-               l = gridSpacing/3.0,
+        double l = gridSpacing/3.0,
                oxw = gridSpacing/10.0;
 
         s_path = gc->CreatePath();
@@ -862,8 +918,7 @@ public:
     {
         const wxRealPoint& gatePos = getGateGridNodePosition()*gridSpacing;
         const wxRealPoint& sourcePos = getSourceGridNodePosition()*gridSpacing;
-        double w = gridSpacing/3.0, 
-               l = gridSpacing/3.0,
+        double l = gridSpacing/3.0,
                oxw = gridSpacing/10.0;
 
         // draw the symbol
@@ -908,8 +963,7 @@ public:
         const wxRealPoint& collectorPos = getDrainGridNodePosition();
         const wxRealPoint& basePos = getGateGridNodePosition()*gridSpacing;
         const wxRealPoint& emitterPos = getSourceGridNodePosition()*gridSpacing;
-        double w = 2*gridSpacing/3.0, l = gridSpacing/3.0,
-               oxw = gridSpacing/10.0;
+        double w = 2*gridSpacing/3.0, l = gridSpacing/3.0;
 
         s_path = gc->CreatePath();
         wxASSERT(!s_path.IsNull());
@@ -938,8 +992,7 @@ public:
     {
         const wxRealPoint& basePos = getGateGridNodePosition()*gridSpacing;
         const wxRealPoint& emitterPos = getSourceGridNodePosition()*gridSpacing;
-        double w = 2*gridSpacing/3.0, l = gridSpacing/3.0,
-               oxw = gridSpacing/10.0;
+        double w = 2*gridSpacing/3.0;
 
         // draw the symbol
         setupGC(gc, gridSpacing, pen);
@@ -981,12 +1034,13 @@ public:
 
     static void initGraphics(wxGraphicsContext* gc, unsigned int gridSpacing)
     {
+        /*
         const wxRealPoint& collectorPos = getDrainGridNodePosition();
         const wxRealPoint& basePos = getGateGridNodePosition()*gridSpacing;
         const wxRealPoint& emitterPos = getSourceGridNodePosition()*gridSpacing;
         double w = 2*gridSpacing/3.0, l = gridSpacing/3.0,
                oxw = gridSpacing/10.0;
-
+        */
         // TODO
     }
 
@@ -1086,7 +1140,7 @@ public:
 
     // SPICE line for such kind of devices is something like:
     // I|V{name} {+node} {-node} [[DC] {value}] [AC {mag} [{phase}]]
-    bool parseSPICEProperty(unsigned int j, const std::string& prop)
+    bool parseSPICEProperty(unsigned int WXUNUSED(j), const std::string& prop)
     {
         wxString strtemp;
         svString str(prop);
@@ -1341,6 +1395,7 @@ public:
 
     static void registerAllDevices()
         {
+            svDeviceFactory::registerDevice(new svExternalPin);
             svDeviceFactory::registerDevice(new svCapacitor);
             svDeviceFactory::registerDevice(new svResistor);
             svDeviceFactory::registerDevice(new svInductor);
@@ -1356,6 +1411,7 @@ public:
 
     static void initGraphics(wxGraphicsContext* gc, unsigned int gridSpacing)
         {
+            svExternalPin::initGraphics(gc, gridSpacing);
             svCapacitor::initGraphics(gc, gridSpacing);
             svResistor::initGraphics(gc, gridSpacing);
             svInductor::initGraphics(gc, gridSpacing);

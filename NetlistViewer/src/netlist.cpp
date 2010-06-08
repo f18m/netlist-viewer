@@ -50,6 +50,7 @@
 // ----------------------------------------------------------------------------
  
 svBaseDeviceArray svDeviceFactory::s_registered;
+wxGraphicsPath svExternalPin::s_path;
 wxGraphicsPath svCapacitor::s_path;
 wxGraphicsPath svResistor::s_path;
 wxGraphicsPath svInductor::s_path;
@@ -308,7 +309,17 @@ bool svParserSPICE::load(svCircuitArray& ret, const std::string& filename)
             if (!sub.parseSPICESubCkt(toparse, startIdx, (size_t)endIdx))
                 return false;
 
-            sub.setName(strtemp.BeforeFirst(' ').ToStdString());
+            // parse arguments of this SUBCKT statement 
+            wxArrayString subckt_args = wxStringTokenize(strtemp, " ", wxTOKEN_DEFAULT);
+            if (subckt_args.size() > 0)
+            {
+                sub.setName(subckt_args[0].ToStdString());
+                subckt_args.erase(subckt_args.begin());
+            }
+            for (size_t j=startIdx; j<subckt_args.size(); j++)
+                sub.addExternalNode(subckt_args[j].ToStdString());
+
+            // now finally we can save the parsed subcircuit
             ret.push_back(sub);
         }
     }
@@ -319,6 +330,12 @@ bool svParserSPICE::load(svCircuitArray& ret, const std::string& filename)
 // ----------------------------------------------------------------------------
 // svCircuit
 // ----------------------------------------------------------------------------
+
+void svCircuit::addExternalNode(const svNode& extNode)
+{ 
+    m_nodes.insert(extNode); 
+    addDevice(new svExternalPin(extNode));
+}
 
 bool svCircuit::parseSPICESubCkt(const wxArrayString& lines, size_t startIdx, size_t endIdx)
 {
@@ -433,15 +450,27 @@ const wxRect& svCircuit::placeDevices(svPlaceAlgorithm ag)
     {
     case SVPA_PLACE_NON_OVERLAPPED:
         {
-            m_devices[0]->setGridPosition(wxPoint(0,0));
-
             wxPoint lastPt;
-            lastPt.x = m_devices[0]->getRightmostGridNodePosition() + 1;
-            for (unsigned int i=1; i<m_devices.size(); i++)
+
+            // first place all external pins in a row
+            std::vector<unsigned int> idx_external_pins;
+            for (unsigned int i=0; i<m_devices.size(); i++)
+                if (std::string(typeid(*m_devices[i]).name()) == std::string("class svExternalPin"))
+                {
+                    idx_external_pins.push_back(i);
+                    m_devices[i]->setGridPosition(wxRealPoint(idx_external_pins.size(), 0));
+                }
+
+            // then place all other devices on a second row
+            lastPt.x = 1;
+            lastPt.y = 2;
+            for (unsigned int i=0; i<m_devices.size(); i++)
             {
+                if (std::find(idx_external_pins.begin(), idx_external_pins.end(), i) != idx_external_pins.end())
+                    continue;
+
                 unsigned int w = m_devices[i]->getRightmostGridNodePosition() - 
                                  m_devices[i]->getLeftmostGridNodePosition();
-
 
                 unsigned int center_offset_w = m_devices[i]->getRelativeGridNodePosition(0).x -
                                                m_devices[i]->getLeftmostGridNodePosition();
@@ -565,7 +594,7 @@ void svCircuit::draw(wxGraphicsContext* gc, unsigned int gridSize, int selectedD
     gc->SetFont(*wxSWISS_FONT, *wxBLACK);
     for (size_t i=0; i<m_devices.size(); i++)
     {
-        m_devices[i]->draw(gc, gridSize, selectedDevice == i ? selected : normal);
+        m_devices[i]->draw(gc, gridSize, selectedDevice == (int)i ? selected : normal);
 
         // decorate the nodes of this device
         for (size_t j=0; j<m_devices[i]->getNodesCount(); j++)
