@@ -132,12 +132,11 @@ COMPILER_PREFIX = wat
 SPICE_VIEWER_CXXFLAGS = $(____WX_SHARED_0_p) -d_UNICODE $(__WXDEBUG_DEFINE_p) &
 	-d__WXMSW__ -i=$(WX_DIR)$(WXLIBPATH)\msw$(WXLIBPOSTFIX) &
 	-i=$(WX_DIR)\include $(____spice_viewer__OPT_2) &
-	$(____spice_viewer__DEBUGINFO_3) -i=src -i=$(BOOST_DIR) $(CPPFLAGS) &
+	$(____spice_viewer__DEBUGINFO_3) -wx -i=src -i=$(BOOST_DIR) $(CPPFLAGS) &
 	$(CXXFLAGS)
 SPICE_VIEWER_OBJECTS =  &
 	$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_app.obj &
-	$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_netlist.obj &
-	$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_schematic.obj
+	$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_netlist.obj
 
 
 all : $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)
@@ -184,9 +183,6 @@ $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_app.
 	$(CXX) -bt=nt -zq -fo=$^@ $(SPICE_VIEWER_CXXFLAGS) $<
 
 $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_netlist.obj :  .AUTODEPEND ..\..\src\netlist.cpp
-	$(CXX) -bt=nt -zq -fo=$^@ $(SPICE_VIEWER_CXXFLAGS) $<
-
-$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_schematic.obj :  .AUTODEPEND ..\..\src\schematic.cpp
 	$(CXX) -bt=nt -zq -fo=$^@ $(SPICE_VIEWER_CXXFLAGS) $<
 
 $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_resources.res :  .AUTODEPEND ..\..\src\resources.rc
