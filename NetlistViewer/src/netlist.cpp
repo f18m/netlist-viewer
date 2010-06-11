@@ -102,6 +102,16 @@ struct {
 // svString
 // ----------------------------------------------------------------------------
 
+extern "C" {
+    extern char *eng(double value, int digits, int numeric);
+};
+
+/* static */
+svString svString::formatValue(double v)
+{
+    return svString(eng(v, 2, 0));
+}
+
 bool svString::startsWithOneOf(const std::string& str, unsigned int* len) const
 {
     if (len) 
@@ -317,7 +327,8 @@ bool svParserSPICE::load(svCircuitArray& ret, const std::string& filename)
                 subckt_args.erase(subckt_args.begin());
             }
             for (size_t j=startIdx; j<subckt_args.size(); j++)
-                sub.addExternalNode(subckt_args[j].ToStdString());
+                // convert to lowercase because SPICE is case insensitive
+                sub.addExternalNode(subckt_args[j].Lower().ToStdString());
 
             // now finally we can save the parsed subcircuit
             ret.push_back(sub);
@@ -355,7 +366,7 @@ bool svCircuit::parseSPICESubCkt(const wxArrayString& lines, size_t startIdx, si
             continue;
 
         // first letter of the component identifies it:
-        svBaseDevice* dev = svDeviceFactory::getDeviceMatchingIdentifier(comp_name[0]);
+        svBaseDevice* dev = svDeviceFactory::getDeviceMatchingIdentifier(comp_name.Upper()[0]);
         if (!dev)
         {
             wxLogError("Unknown component type for '%s'\n", comp_name);
@@ -373,8 +384,12 @@ bool svCircuit::parseSPICESubCkt(const wxArrayString& lines, size_t startIdx, si
 
         for (size_t j=0; j<dev->getNodesCount(); j++)
         {
-            addNode(arr[0].ToStdString());
-            dev->addNode(arr[0].ToStdString());
+            // convert to lowercase because SPICE is case insensitive
+            std::string nodeName = arr[0].Lower().ToStdString();
+
+            // add this node both to the global circuit and to the current device...
+            addNode(nodeName);
+            dev->addNode(nodeName);
 
             arr.erase(arr.begin());     // this node has been processed; remove it
         }
@@ -594,7 +609,7 @@ void svCircuit::draw(wxGraphicsContext* gc, unsigned int gridSize, int selectedD
     gc->SetFont(*wxSWISS_FONT, *wxBLACK);
     for (size_t i=0; i<m_devices.size(); i++)
     {
-        m_devices[i]->draw(gc, gridSize, selectedDevice == (int)i ? selected : normal);
+        m_devices[i]->drawWithDesc(gc, gridSize, selectedDevice == (int)i ? selected : normal);
 
         // decorate the nodes of this device
         for (size_t j=0; j<m_devices[i]->getNodesCount(); j++)

@@ -32,6 +32,7 @@
 #include <wx/aboutdlg.h>
 #include <wx/dcbuffer.h>
 #include "netlist.h"
+#include <fstream>
 
 #ifdef __WXMSW__
     #include <wx/msw/msvcrt.h>      // useful to catch memory leaks when compiling under MSVC 
@@ -41,13 +42,15 @@
 // constants
 // ----------------------------------------------------------------------------
 
-#define SV_VERSION_STR         "1.0"
+#define SV_VERSION_STR         "0.1"
 
 // IDs for the controls and the menu commands
 enum
 {
     SpiceViewer_ShowGrid = wxID_HIGHEST+1,
-    SpiceViewer_Open = wxID_OPEN,
+    SpiceViewer_OpenNVS,
+    SpiceViewer_Export,
+    SpiceViewer_OpenNetlist = wxID_OPEN,
     SpiceViewer_Quit = wxID_EXIT,
     SpiceViewer_About = wxID_ABOUT
 };
@@ -93,6 +96,9 @@ public:
         UpdateGraphics();
     }
 
+    const svCircuit& GetCircuit() const
+        { return m_ckt; }
+
     //! Updates all graphic objects cached in the current circuit (sub)objects.
     //! This function needs to be called only on new circuit (see SetCircuit())
     //! and in case the grid size has been changed (see OnMouseWheel()).
@@ -130,7 +136,7 @@ private:        // vars for dragging
     wxPoint m_ptDraggedDevOffset; // in pixel coords
     int m_idxDraggedDev;
 
-    wxDECLARE_EVENT_TABLE()
+    wxDECLARE_EVENT_TABLE();
 };
 
 // main application frame
@@ -140,7 +146,9 @@ public:
     SpiceViewerFrame(const wxString& title);
 
     // event handlers (these functions should _not_ be virtual)
-    void OnOpen(wxCommandEvent& event);
+    void OnOpenNetlist(wxCommandEvent& event);
+    void OnOpenNVS(wxCommandEvent& event);
+    void OnExportNVS(wxCommandEvent& event);
     void OnQuit(wxCommandEvent& event);
     void OnAbout(wxCommandEvent& event);
     void OnShowGrid(wxCommandEvent& event);
@@ -148,7 +156,7 @@ public:
 private:
     SpiceViewerCanvas* m_canvas;
 
-    wxDECLARE_EVENT_TABLE()
+    wxDECLARE_EVENT_TABLE();
 };
 
 // ============================================================================
@@ -159,7 +167,7 @@ private:
 // SpiceViewerApp - the application class
 // ----------------------------------------------------------------------------
 
-wxIMPLEMENT_APP(SpiceViewerApp)
+wxIMPLEMENT_APP(SpiceViewerApp);
 
 bool SpiceViewerApp::OnInit()
 {
@@ -222,10 +230,12 @@ int SpiceViewerApp::OnExit()
 // ----------------------------------------------------------------------------
 
 wxBEGIN_EVENT_TABLE(SpiceViewerFrame, wxFrame)
-    EVT_MENU(SpiceViewer_ShowGrid,  SpiceViewerFrame::OnShowGrid)
-    EVT_MENU(SpiceViewer_Open,  SpiceViewerFrame::OnOpen)
-    EVT_MENU(SpiceViewer_Quit,  SpiceViewerFrame::OnQuit)
-    EVT_MENU(SpiceViewer_About, SpiceViewerFrame::OnAbout)
+    EVT_MENU(SpiceViewer_ShowGrid,    SpiceViewerFrame::OnShowGrid)
+    EVT_MENU(SpiceViewer_OpenNetlist, SpiceViewerFrame::OnOpenNetlist)
+    EVT_MENU(SpiceViewer_OpenNVS,     SpiceViewerFrame::OnOpenNVS)
+    EVT_MENU(SpiceViewer_Export,      SpiceViewerFrame::OnExportNVS)
+    EVT_MENU(SpiceViewer_Quit,        SpiceViewerFrame::OnQuit)
+    EVT_MENU(SpiceViewer_About,       SpiceViewerFrame::OnAbout)
 wxEND_EVENT_TABLE()
 
 SpiceViewerFrame::SpiceViewerFrame(const wxString& title)
@@ -236,9 +246,14 @@ SpiceViewerFrame::SpiceViewerFrame(const wxString& title)
     wxMenu *fileMenu = new wxMenu;
     fileMenu->AppendCheckItem(SpiceViewer_ShowGrid, "&Show grid", 
                               "Should the grid for the devices be shown?")->Check();
-    fileMenu->Append(SpiceViewer_Open, "&Open...", "Open a SPICE netlist to view");
+    fileMenu->Append(SpiceViewer_OpenNetlist, "&Open SPICE netlist...", "Open a SPICE netlist to view");
+    fileMenu->Append(SpiceViewer_OpenNVS, "Open NVS...", "Open a schematic in the native NetlistViewer format (NVS)");
+    fileMenu->AppendSeparator();
+    fileMenu->Append(SpiceViewer_Export, "Export to NVS...", "Export the schematic to a native NetlistViewer format (NVS)");
     fileMenu->AppendSeparator();
     fileMenu->Append(SpiceViewer_Quit, "E&xit\tAlt-X", "Quit this program");
+
+        // TODO: export routine for gEDA: http://geda.seul.org/wiki/geda:file_format_spec
 
     wxMenu *helpMenu = new wxMenu;
     helpMenu->Append(SpiceViewer_About, "&About...\tF1", "Show about dialog");
@@ -267,7 +282,7 @@ void SpiceViewerFrame::OnShowGrid(wxCommandEvent& event)
         m_canvas->ShowGrid(event.IsChecked());
 }
 
-void SpiceViewerFrame::OnOpen(wxCommandEvent& WXUNUSED(event))
+void SpiceViewerFrame::OnOpenNetlist(wxCommandEvent& WXUNUSED(event))
 {
     wxFileDialog 
         openFileDialog(this, "Open SPICE netlist", "", "",
@@ -304,6 +319,76 @@ void SpiceViewerFrame::OnOpen(wxCommandEvent& WXUNUSED(event))
     Refresh();
 }
 
+void SpiceViewerFrame::OnOpenNVS(wxCommandEvent& WXUNUSED(event))
+{
+    wxFileDialog 
+        openFileDialog(this, "Open NetlistViewer schematic", "", "",
+                       "NetlistViewer schematic (*.nvs)|*.nvs", wxFD_OPEN|wxFD_FILE_MUST_EXIST);
+
+    if (openFileDialog.ShowModal() == wxID_CANCEL)
+        return;     // the user changed idea...
+
+    // proceed loading the file chosen by the user:
+    std::ifstream ifs((const char*)openFileDialog.GetPath());
+    if (!ifs.fail())
+    {
+        try {
+            boost::archive::text_iarchive ia(ifs);
+            svDeviceFactory::registerAllDevicesForSerialization(ia);
+
+            // read class state from archive
+            svCircuit ckt;
+            ia >> ckt;
+            m_canvas->SetCircuit(ckt);
+
+            SetTitle(wxString::Format("Netlist Viewer [%s]", ckt.getName()));
+            Refresh();
+        } 
+        catch (const boost::archive::archive_exception& e)
+        {
+            wxLogError("Error while importing the NVS file: %s", e.what());
+        }
+    }
+    else
+    {
+        wxLogError("Error while trying to open the NVS file '%s'", openFileDialog.GetPath());
+        return;
+    }
+}
+
+void SpiceViewerFrame::OnExportNVS(wxCommandEvent& WXUNUSED(event))
+{
+    wxFileDialog 
+        saveFileDialog(this, "Save NetlistViewer schematic", "", "",
+                       "NetlistViewer schematic (*.nvs)|*.nvs", wxFD_SAVE|wxFD_OVERWRITE_PROMPT);
+
+    if (saveFileDialog.ShowModal() == wxID_CANCEL)
+        return;     // the user changed idea...
+
+    // save data to archive
+    std::ofstream ofs((const char*)saveFileDialog.GetPath());
+    if (!ofs.fail())
+    {
+        try {
+            boost::archive::text_oarchive oa(ofs);
+            svDeviceFactory::registerAllDevicesForSerialization(oa);
+
+            // write class instance to archive
+            oa << m_canvas->GetCircuit();
+        }
+        catch (const boost::archive::archive_exception& e)
+        {
+            // NOTE: this is typically a logic error in the program!
+            wxLogError("Error while exporting in NVS format: %s", e.what());
+        }
+    }
+    else
+    {
+        wxLogError("Error while saving the NVS file '%s'", saveFileDialog.GetPath());
+        return;
+    }
+}
+
 void SpiceViewerFrame::OnQuit(wxCommandEvent& WXUNUSED(event))
 {
     Close(true /* force the frame to close */);
@@ -317,7 +402,7 @@ void SpiceViewerFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
     aboutInfo.SetDescription("SPICE netlist viewer. This program converts a SPICE text netlist to a graphical schematic.");
     aboutInfo.SetCopyright("(C) 2010");
     aboutInfo.SetWebSite("https://sourceforge.net/projects/netlistviewer");
-    aboutInfo.AddDeveloper("Francesco Montorsi");
+    aboutInfo.AddDeveloper("Francesco Montorsi <frm@users.sourceforge.net>");
 
     wxAboutBox(aboutInfo);
 }

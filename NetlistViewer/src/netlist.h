@@ -22,7 +22,13 @@
 #include <set>
 
 #include <wx/graphics.h>
+
 #include <boost/graph/adjacency_matrix.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/serialization/set.hpp>
+#include <boost/serialization/vector.hpp>
+#include <boost/serialization/base_object.hpp>
 
 #ifdef __WXMSW__
     #include <wx/msw/msvcrt.h>      // useful to catch memory leaks when compiling under MSVC 
@@ -60,6 +66,10 @@ enum svPlaceAlgorithm
 extern wxPoint svInvalidPoint;
 extern svNode svGroundNode;
 
+// ----------------------------------------------------------------------------
+// helper functions
+// ----------------------------------------------------------------------------
+ 
 //! Graphic helper; draws a straight line on the given graphic path.
 static void drawLine(wxGraphicsPath& path, const wxRealPoint& pt1, const wxRealPoint& pt2)
 {
@@ -73,6 +83,26 @@ static void drawLine(wxGraphicsContext* gc, const wxRealPoint& pt1, const wxReal
     gc->StrokeLine(pt1.x, pt1.y, pt2.x, pt2.y);
 }
 
+namespace boost {
+namespace serialization {
+    // NOTE: when the class Archive corresponds to an output archive, the
+    // & operator is defined similar to <<.  Likewise, when the class Archive
+    // is a type of input archive the & operator is defined similar to >>.
+
+    template<class Archive>
+    void serialize(Archive& ar, wxRect& r, const unsigned int WXUNUSED(version))
+    {
+        ar & r.x; ar & r.y; ar & r.width; ar & r.height;
+    }
+
+    template<class Archive>
+    void serialize(Archive& ar, wxPoint& p, const unsigned int WXUNUSED(version))
+    {
+        ar & p.x; ar & p.y;
+    }
+} // namespace serialization
+} // namespace boost
+
 
 // ----------------------------------------------------------------------------
 // helper classes
@@ -85,12 +115,18 @@ public:
     svString() {}
     svString(const wxString& str) : wxString(str) {}
 
+    //! Returns true if this string starts with a character contained in the
+    //! given string @a str. If it does, returns how many characters at the
+    //! beginning of the string are contained in @a str.
     bool startsWithOneOf(const std::string& str, unsigned int* len = NULL) const;
 
     //! Parses this string as if it contains a SPICE value.
     //! SPICE values are written either in scientific format (xxxEyyy)
     //! or using unit multipliers (xxxU).
     bool getValue(double* res) const;
+
+    //! Returns a string containing a number formatted in engineering format.
+    static svString formatValue(double value);
 };
 
 //! A basic SPICE device.
@@ -125,6 +161,19 @@ protected:
         gc->SetTransform(m);
     }
 
+private:     // serialization functions
+
+    friend class boost::serialization::access;
+
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int WXUNUSED(version))
+    {
+        ar & m_nodes;
+        ar & m_name;
+        ar & m_position;
+        ar & m_rotation;
+    }
+
 public:
     svBaseDevice()
         {
@@ -136,12 +185,19 @@ public:     // misc functions
     //! Returns an uppercase string with a human-readable description of this device.
     virtual std::string getHumanReadableDesc() const = 0;
 
+    //! Returns a description string for this device.
+    //! Some devices will return their "value" instead of their name here.
+    virtual wxString getDescription() const
+        { return m_name; }
+
     //! Clones this instance and returns the just allocated object.
     virtual svBaseDevice* clone() const = 0;
 
-
+    //! Sets the name of this device.
     void setName(const std::string& name)
         { m_name = name; }
+
+    //! Returns the name of this device.
     std::string getName() const
         { return m_name; }
 
@@ -199,11 +255,23 @@ public:     // drawing functions
     //            are instead points referred to a specific grid spacing and are always
     //            positive.
 
-    //! Draws this device on the given DC placing the first node of the device at
+    //! Draws this device on the given GC placing the first node of the device at
     //! the given grid position. Note that the conversion between the grid position 'x'
-    //! and the pixel position 'y' is computed as:
-    //!     y = x*gridSpacing;
+    //! and the pixel position 'y' is computed as: <tt>y = x*gridSpacing</tt>.
     virtual void draw(wxGraphicsContext* gc, unsigned int gridSpacing, const wxPen& pen) const = 0;
+
+    //! Draws this device annotating next to it also its value.
+    void drawWithDesc(wxGraphicsContext* gc, unsigned int gridSpacing, const wxPen& pen) const
+        {
+            draw(gc, gridSpacing, pen);
+
+            wxGraphicsMatrix m = gc->CreateMatrix();
+            m.Translate((m_position.x+0.5)*gridSpacing, (m_position.y+0.5)*gridSpacing);
+            m.Rotate(int(m_rotation+1)*M_PI/2);
+            gc->SetTransform(m);
+
+            gc->DrawText(getDescription(), 0, 0);
+        }
 
     //! Returns the grid position (relative to zero-th node) for the given node index
     //! (which should always be < getNodesCount()).
@@ -294,13 +362,13 @@ class svCircuit
     //! Each node is connected to one or more device nodes.
     std::set<svNode> m_nodes;
 
-    //! The array of devices.
-    //! Each device has two or more nodes connected with the elements of the m_nodes array.
-    std::vector<svBaseDevice*> m_devices;
-
     //! The bounding box for the grid where the devices of this circuit are placed.
     //! This member variable is updated only by the placeDevices() function.
     wxRect m_bb;
+
+    //! The array of devices.
+    //! Each device has two or more nodes connected with the elements of the m_nodes array.
+    std::vector<svBaseDevice*> m_devices;
 
     
     void assign(const svCircuit& tocopy)
@@ -321,6 +389,19 @@ class svCircuit
         m_name.clear();
         m_nodes.clear();
         m_bb = wxRect(0,0,0,0);
+    }
+
+private:     // serialization functions
+
+    friend class boost::serialization::access;
+
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int WXUNUSED(version))
+    {
+        ar & m_name;
+        ar & m_nodes;
+        ar & m_bb;
+        ar & m_devices;
     }
 
 public:
@@ -364,6 +445,8 @@ public:     // node & device management functions
     const std::vector<svBaseDevice*>& getDevices() const
         { return m_devices; }
 
+    //! Returns an array of positions of the device nodes connected with the
+    //! the given one.
     std::vector<wxPoint> getDeviceNodesConnectedTo(const svNode& node) const
     {
         std::vector<wxPoint> ret;
@@ -447,6 +530,13 @@ class svExternalPin : public svBaseDevice
     //! The graphics path. Filled by initGraphics(), it's used by draw() for painting.
     static wxGraphicsPath s_path;
 
+private:     // serialization functions
+    friend class boost::serialization::access;
+
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int WXUNUSED(version))
+        { ar & boost::serialization::base_object<svBaseDevice>(*this); }
+
 public:
     svExternalPin(const svNode& node = "")
         { addNode(node); m_name = node; }
@@ -502,6 +592,13 @@ public:
 //! Abstract class which represents two-poles devices.
 class svTwoPolesDevice : public svBaseDevice
 {
+private:     // serialization functions
+    friend class boost::serialization::access;
+
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int WXUNUSED(version))
+        { ar & boost::serialization::base_object<svBaseDevice>(*this); }
+
 protected:
     // functions used by static initGraphics() functions of derived classes...
     // i.e. these ones do not need to take the rotation in account
@@ -549,11 +646,29 @@ protected:
     //! The model name for this device.
     std::string m_modelName;
 
+private:     // serialization functions
+
+    friend class boost::serialization::access;
+
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int WXUNUSED(version))
+    {
+        // serialize base class information
+        ar & boost::serialization::base_object<svTwoPolesDevice>(*this);
+
+        ar & m_value;
+        ar & m_ic;
+        ar & m_modelName;
+    }
+
 public:
     svPassiveDevice()
     {
         m_value = m_ic = 0;
     }
+
+    virtual wxString getDescription() const
+        { return svString::formatValue(m_value); }
 
     // SPICE line for such kind of devices is something like:
     //   L|C|R{name} {+node} {-node} [model] {value} [IC={initial}]  
@@ -598,6 +713,13 @@ class svCapacitor : public svPassiveDevice
     //! The graphics path. Filled by initGraphics(), it's used by draw() for painting.
     static wxGraphicsPath s_path;
 
+private:     // serialization functions
+    friend class boost::serialization::access;
+
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int WXUNUSED(version))
+        { ar & boost::serialization::base_object<svPassiveDevice>(*this); }
+
 public:
     svCapacitor() {}
 
@@ -635,6 +757,13 @@ class svResistor : public svPassiveDevice
 {
     //! The graphics path. Filled by initGraphics(), it's used by draw() for painting.
     static wxGraphicsPath s_path;
+
+private:     // serialization functions
+    friend class boost::serialization::access;
+
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int WXUNUSED(version))
+        { ar & boost::serialization::base_object<svPassiveDevice>(*this); }
 
 public:
     svResistor() {}
@@ -676,6 +805,13 @@ class svInductor : public svPassiveDevice
     //! The graphics path. Filled by initGraphics(), it's used by draw() for painting.
     static wxGraphicsPath s_path;
 
+private:     // serialization functions
+    friend class boost::serialization::access;
+
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int WXUNUSED(version))
+        { ar & boost::serialization::base_object<svPassiveDevice>(*this); }
+
 public:
     svInductor() {}
 
@@ -714,6 +850,13 @@ class svDiode : public svPassiveDevice
 {
     //! The graphics path. Filled by initGraphics(), it's used by draw() for painting.
     static wxGraphicsPath s_path;
+
+private:     // serialization functions
+    friend class boost::serialization::access;
+
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int WXUNUSED(version))
+        { ar & boost::serialization::base_object<svPassiveDevice>(*this); }
 
 public:
     svDiode() {}
@@ -766,6 +909,17 @@ protected:
     static wxRealPoint getDrainGridNodePosition() { return wxRealPoint(0,0); }
     static wxRealPoint getGateGridNodePosition() { return wxRealPoint(-1,1); }
     static wxRealPoint getSourceGridNodePosition() { return wxRealPoint(0,2); }
+
+private:     // serialization functions
+    friend class boost::serialization::access;
+
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int WXUNUSED(version))
+        { 
+            ar & boost::serialization::base_object<svBaseDevice>(*this); 
+            ar & m_modelName;
+            ar & m_bNChannel;
+        }
 
 public:
     svTransistorDevice()
@@ -873,6 +1027,13 @@ class svMOS : public svTransistorDevice
     //! The graphics path. Filled by initGraphics(), it's used by draw() for painting.
     static wxGraphicsPath s_path, s_pathArrow;
 
+private:     // serialization functions
+    friend class boost::serialization::access;
+
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int WXUNUSED(version))
+        { ar & boost::serialization::base_object<svTransistorDevice>(*this); }
+
 public:
     svMOS() {}
 
@@ -951,6 +1112,13 @@ class svBJT : public svTransistorDevice
     //! The graphics path. Filled by initGraphics(), it's used by draw() for painting.
     static wxGraphicsPath s_path, s_pathArrow;
 
+private:     // serialization functions
+    friend class boost::serialization::access;
+
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int WXUNUSED(version))
+        { ar & boost::serialization::base_object<svTransistorDevice>(*this); }
+
 public:
     svBJT() {}
 
@@ -1025,6 +1193,13 @@ class svJFET : public svTransistorDevice
     //! The graphics path. Filled by initGraphics(), it's used by draw() for painting.
     static wxGraphicsPath s_path, s_pathArrow;
 
+private:     // serialization functions
+    friend class boost::serialization::access;
+
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int WXUNUSED(version))
+        { ar & boost::serialization::base_object<svTransistorDevice>(*this); }
+
 public:
     svJFET() {}
 
@@ -1062,6 +1237,13 @@ protected:
                           s_pathDipendent,      // a rombo
                           s_pathCurrentArrow,
                           s_pathVoltageSigns;
+
+private:     // serialization functions
+    friend class boost::serialization::access;
+
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int WXUNUSED(version))
+        { ar & boost::serialization::base_object<svTwoPolesDevice>(*this); }
 
 public:
 
@@ -1135,6 +1317,16 @@ class svIndipendentSource : public svSource
 {
     double m_value;
 
+private:     // serialization functions
+    friend class boost::serialization::access;
+
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int WXUNUSED(version))
+        { 
+            ar & boost::serialization::base_object<svSource>(*this); 
+            ar & m_value;
+        }
+
 public:
     svIndipendentSource() {}
 
@@ -1177,6 +1369,13 @@ class svISource : public svIndipendentSource
     //! The graphics path. Filled by initGraphics(), it's used by draw() for painting.
     static wxGraphicsPath s_path, s_pathArrow;
 
+private:     // serialization functions
+    friend class boost::serialization::access;
+
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int WXUNUSED(version))
+        { ar & boost::serialization::base_object<svIndipendentSource>(*this); }
+
 public:
     svISource() {}
 
@@ -1197,6 +1396,13 @@ class svVSource : public svIndipendentSource
 {
     //! The graphics path. Filled by initGraphics(), it's used by draw() for painting.
     static wxGraphicsPath s_path;
+
+private:     // serialization functions
+    friend class boost::serialization::access;
+
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int WXUNUSED(version))
+        { ar & boost::serialization::base_object<svIndipendentSource>(*this); }
 
 public:
     svVSource() {}
@@ -1285,6 +1491,19 @@ class svVoltageControlledSource : public svSource
     std::string m_ctrlNode1;
     std::string m_ctrlNode2;
 
+private:     // serialization functions
+    friend class boost::serialization::access;
+
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int WXUNUSED(version))
+        { 
+            ar & boost::serialization::base_object<svSource>(*this); 
+            ar & m_gain;
+            ar & m_value;
+            ar & m_ctrlNode1;
+            ar & m_ctrlNode2;
+        }
+
 public:
     svVoltageControlledSource() {}
 
@@ -1333,6 +1552,12 @@ public:
 
 class svESource : public svVoltageControlledSource
 {
+private:     // serialization functions
+    friend class boost::serialization::access;
+
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int WXUNUSED(version))
+        { ar & boost::serialization::base_object<svVoltageControlledSource>(*this); }
 public:
     svESource() {}
 
@@ -1351,6 +1576,13 @@ public:
 
 class svGSource : public svVoltageControlledSource
 {
+private:     // serialization functions
+    friend class boost::serialization::access;
+
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int WXUNUSED(version))
+        { ar & boost::serialization::base_object<svVoltageControlledSource>(*this); }
+
 public:
     svGSource() {}
 
@@ -1407,6 +1639,23 @@ public:
             svDeviceFactory::registerDevice(new svJFET);
             svDeviceFactory::registerDevice(new svGSource);
             svDeviceFactory::registerDevice(new svESource);
+        }
+
+    template<class Archive>
+    static void registerAllDevicesForSerialization(Archive& ar)
+        {
+            ar.template register_type<svExternalPin>();
+            ar.template register_type<svCapacitor>();
+            ar.template register_type<svResistor>();
+            ar.template register_type<svInductor>();
+            ar.template register_type<svDiode>();
+            ar.template register_type<svISource>();
+            ar.template register_type<svVSource>();
+            ar.template register_type<svMOS>();
+            ar.template register_type<svBJT>();
+            ar.template register_type<svJFET>();
+            ar.template register_type<svGSource>();
+            ar.template register_type<svESource>();
         }
 
     static void initGraphics(wxGraphicsContext* gc, unsigned int gridSpacing)
