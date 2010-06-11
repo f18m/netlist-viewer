@@ -10,8 +10,14 @@
 # These are configurable options:
 # -------------------------------------------------------------------------
 
+# C compiler 
+CC = wcc386
+
 # C++ compiler 
 CXX = wpp386
+
+# Standard flags for CC 
+CFLAGS = 
 
 # Standard flags for C++ 
 CXXFLAGS = 
@@ -129,6 +135,11 @@ WXLIBPATH = \lib\$(COMPILER_PREFIX)_dll
 ### Variables: ###
 
 COMPILER_PREFIX = wat
+SPICE_VIEWER_CFLAGS = $(____WX_SHARED_0_p) -d_UNICODE $(__WXDEBUG_DEFINE_p) &
+	-d__WXMSW__ -i=$(WX_DIR)$(WXLIBPATH)\msw$(WXLIBPOSTFIX) &
+	-i=$(WX_DIR)\include $(____spice_viewer__OPT_2) &
+	$(____spice_viewer__DEBUGINFO_3) -wx -i=src -i=$(BOOST_DIR) $(CPPFLAGS) &
+	$(CFLAGS)
 SPICE_VIEWER_CXXFLAGS = $(____WX_SHARED_0_p) -d_UNICODE $(__WXDEBUG_DEFINE_p) &
 	-d__WXMSW__ -i=$(WX_DIR)$(WXLIBPATH)\msw$(WXLIBPOSTFIX) &
 	-i=$(WX_DIR)\include $(____spice_viewer__OPT_2) &
@@ -136,6 +147,7 @@ SPICE_VIEWER_CXXFLAGS = $(____WX_SHARED_0_p) -d_UNICODE $(__WXDEBUG_DEFINE_p) &
 	$(CXXFLAGS)
 SPICE_VIEWER_OBJECTS =  &
 	$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_app.obj &
+	$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_eng.obj &
 	$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_netlist.obj
 
 
@@ -181,6 +193,9 @@ test_for_selected_wxbuild :
 
 $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_app.obj :  .AUTODEPEND ..\..\src\app.cpp
 	$(CXX) -bt=nt -zq -fo=$^@ $(SPICE_VIEWER_CXXFLAGS) $<
+
+$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_eng.obj :  .AUTODEPEND ..\..\src\eng.c
+	$(CC) -bt=nt -zq -fo=$^@ $(SPICE_VIEWER_CFLAGS) $<
 
 $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_netlist.obj :  .AUTODEPEND ..\..\src\netlist.cpp
 	$(CXX) -bt=nt -zq -fo=$^@ $(SPICE_VIEWER_CXXFLAGS) $<

@@ -10,8 +10,14 @@
 # These are configurable options:
 # -------------------------------------------------------------------------
 
+# C compiler 
+CC = cl
+
 # C++ compiler 
 CXX = cl
+
+# Standard flags for CC 
+CFLAGS = 
 
 # Standard flags for C++ 
 CXXFLAGS = 
@@ -56,6 +62,12 @@ BOOST_DIR = $(BOOST_DIR)
 ### Variables: ###
 
 COMPILER_PREFIX = vc
+SPICE_VIEWER_CFLAGS = /MD$(____spice_viewer__DEBUGINFO_9) /DWIN32 \
+	$(____WX_SHARED_2_p) /D_UNICODE $(__WXDEBUG_DEFINE_p) /D__WXMSW__ \
+	/I$(WX_DIR)$(__WXLIBPATH_FILENAMES)\msw$(WXLIBPOSTFIX) \
+	/I$(WX_DIR)\include /D_WINDOWS $(____spice_viewer__OPT_5) \
+	$(____spice_viewer__DEBUGINFO_6) $(______spice_viewer__DEBUGINFO_8_p) \
+	/Fd..\..\SpiceViewer.pdb /W4 /Isrc /I$(BOOST_DIR) $(CPPFLAGS) $(CFLAGS)
 SPICE_VIEWER_CXXFLAGS = /MD$(____spice_viewer__DEBUGINFO_9) /DWIN32 \
 	$(____WX_SHARED_2_p) /D_UNICODE $(__WXDEBUG_DEFINE_p) /D__WXMSW__ \
 	/I$(WX_DIR)$(__WXLIBPATH_FILENAMES)\msw$(WXLIBPOSTFIX) \
@@ -65,6 +77,7 @@ SPICE_VIEWER_CXXFLAGS = /MD$(____spice_viewer__DEBUGINFO_9) /DWIN32 \
 	$(CXXFLAGS)
 SPICE_VIEWER_OBJECTS =  \
 	$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_app.obj \
+	$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_eng.obj \
 	$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_netlist.obj
 SPICE_VIEWER_RESOURCES =  \
 	$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_resources.res
@@ -225,6 +238,9 @@ test_for_selected_wxbuild:
 
 $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_app.obj: ..\..\src\app.cpp
 	$(CXX) /c /nologo /TP /Fo$@ $(SPICE_VIEWER_CXXFLAGS) ..\..\src\app.cpp
+
+$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_eng.obj: ..\..\src\eng.c
+	$(CC) /c /nologo /TC /Fo$@ $(SPICE_VIEWER_CFLAGS) ..\..\src\eng.c
 
 $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_netlist.obj: ..\..\src\netlist.cpp
 	$(CXX) /c /nologo /TP /Fo$@ $(SPICE_VIEWER_CXXFLAGS) ..\..\src\netlist.cpp
