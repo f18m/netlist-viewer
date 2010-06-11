@@ -40,7 +40,7 @@
         <include>src</include>
         <include>$(BOOST_DIR)</include>
     
-        <sources>$(fileList('src/*.cpp'))</sources>
+        <sources>$(fileList('src/*.c*'))</sources>
         <headers>$(fileList('src/*.h'))</headers>
         <win32-res>src/resources.rc</win32-res>
         
