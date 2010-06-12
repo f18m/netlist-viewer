@@ -483,7 +483,7 @@ void SpiceViewerCanvas::OnMouseDown(wxMouseEvent &event)
     DoPrepareDC(dc);
 
     wxPoint click(event.GetLogicalPosition(dc));
-    int idx = m_ckt.hitTest(wxRealPoint(click.x, click.y)/m_gridSize, 0.25);
+    int idx = m_ckt.hitTest(click, m_gridSize, m_gridSize/5 /* tolerance in px */);
     if (idx == wxNOT_FOUND)
         return;
 
