@@ -33,12 +33,13 @@
     <!--                                                            -->
     
     <exe id="spice_viewer" template="wxgui,wxlike">
-        <exename>SpiceViewer</exename>
+        <exename>NetlistViewer</exename>
         <dirname>../..</dirname>
         <warnings>max</warnings>
     
         <include>src</include>
         <include>$(BOOST_DIR)</include>
+        <lib-path>$(BOOST_DIR)/stage/lib</lib-path>
     
         <sources>$(fileList('src/*.c*'))</sources>
         <headers>$(fileList('src/*.h'))</headers>
