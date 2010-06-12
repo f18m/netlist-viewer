@@ -59,6 +59,7 @@ wxGraphicsPath svMOS::s_path;
 wxGraphicsPath svMOS::s_pathArrow;
 wxGraphicsPath svBJT::s_path;
 wxGraphicsPath svBJT::s_pathArrow;
+wxGraphicsPath svJFET::s_path;
 wxGraphicsPath svSource::s_pathIndipendent;
 wxGraphicsPath svSource::s_pathDipendent;
 wxGraphicsPath svSource::s_pathCurrentArrow;
@@ -326,7 +327,7 @@ bool svParserSPICE::load(svCircuitArray& ret, const std::string& filename)
                 sub.setName(subckt_args[0].ToStdString());
                 subckt_args.erase(subckt_args.begin());
             }
-            for (size_t j=startIdx; j<subckt_args.size(); j++)
+            for (size_t j=0; j<subckt_args.size(); j++)
                 // convert to lowercase because SPICE is case insensitive
                 sub.addExternalNode(subckt_args[j].Lower().ToStdString());
 
@@ -611,6 +612,15 @@ void svCircuit::draw(wxGraphicsContext* gc, unsigned int gridSize, int selectedD
     {
         m_devices[i]->drawWithDesc(gc, gridSize, selectedDevice == (int)i ? selected : normal);
 
+#if 0
+        // draw the bounding box for each device
+        gc->SetTransform(gc->CreateMatrix());   // reset the transformation matrix
+        wxRect r = m_devices[i]->getRealBoundingBox(gridSize);
+        gc->SetPen(selected);
+        gc->SetBrush(*wxTRANSPARENT_BRUSH);
+        gc->DrawRectangle(r.x, r.y, r.width, r.height);
+#endif
+
         // decorate the nodes of this device
         for (size_t j=0; j<m_devices[i]->getNodesCount(); j++)
         {
@@ -663,11 +673,20 @@ void svCircuit::draw(wxGraphicsContext* gc, unsigned int gridSize, int selectedD
             for (size_t j=0; j<arrConnectedNodes.size(); j++)
                 for (size_t k=0; k<arrConnectedNodes.size(); k++)
                     if (k != j)
-                        dc.DrawLine(arrConnectedNodes[j]*gridSize, arrConnectedNodes[k]*gridSize);
-#else
+                        drawLine(gc, arrConnectedNodes[j]*gridSize, arrConnectedNodes[k]*gridSize);
+#elif 1
             // TODO: we should find the spanning tree over the graph formed by the nodes in arrConnectedNodes
             for (size_t j=1; j<arrConnectedNodes.size(); j++)
                 drawLine(gc, arrConnectedNodes[j-1]*gridSize, arrConnectedNodes[j]*gridSize);
+#else
+            for (size_t j=1; j<arrConnectedNodes.size(); j++)
+            {
+                wxRealPoint tmppt(arrConnectedNodes[j]*gridSize);
+
+                tmppt.x = arrConnectedNodes[j-1].x*gridSize;
+                drawLine(gc, arrConnectedNodes[j-1]*gridSize, tmppt);
+                drawLine(gc, tmppt, arrConnectedNodes[j]*gridSize);
+            }
 #endif
         }
     }

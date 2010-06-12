@@ -49,6 +49,9 @@ char *eng(double value, int digits, int numeric)
       else if(value >= 10.0)
          digits -= 1;
 
+      if (digits < 1)
+          digits = 1;
+
       if(numeric || (expof10 < PREFIX_START) ||    
                     (expof10 > PREFIX_END))
         sprintf(res, "%.*fe%d", digits-1, value, expof10); 

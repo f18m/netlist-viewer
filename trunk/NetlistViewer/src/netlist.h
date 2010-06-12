@@ -83,6 +83,35 @@ static void drawLine(wxGraphicsContext* gc, const wxRealPoint& pt1, const wxReal
     gc->StrokeLine(pt1.x, pt1.y, pt2.x, pt2.y);
 }
 
+//! Graphic helper; optimized rotation for a rectangle around origin.
+static wxRect2DDouble rotateRect(const wxRect2DDouble& r, svRotation rot)
+{
+    wxRect2DDouble ret;
+    switch (rot)
+    {
+    case SVR_0:
+        ret = r;
+        break;
+    case SVR_90:
+        ret.SetLeftTop(wxPoint2DDouble(-r.GetBottom(), r.GetLeft()));
+        ret.SetRightBottom(wxPoint2DDouble(-r.GetTop(), r.GetRight()));
+        break;
+    case SVR_180:
+        ret.SetLeftTop(wxPoint2DDouble(-r.GetRight(), -r.GetBottom()));
+        ret.SetRightBottom(wxPoint2DDouble(-r.GetLeft(), -r.GetTop()));
+        break;
+    case SVR_270:
+        ret.SetLeftTop(wxPoint2DDouble(r.GetTop(), -r.GetRight()));
+        ret.SetRightBottom(wxPoint2DDouble(r.GetBottom(), -r.GetLeft()));
+        break;
+    }
+
+    ret.m_width = fabs(ret.m_width);
+    ret.m_height = fabs(ret.m_height);
+
+    return ret;
+}
+
 namespace boost {
 namespace serialization {
     // NOTE: when the class Archive corresponds to an output archive, the
@@ -160,6 +189,14 @@ protected:
         m.Rotate(int(m_rotation)*M_PI/2);
         gc->SetTransform(m);
     }
+
+    wxRect getRealBoundingBoxFromPath(const wxGraphicsPath& path, unsigned int gridSpacing) const
+        { 
+            wxRect2DDouble r = path.GetBox();
+            r = rotateRect(r, m_rotation);
+            r.Offset(m_position*gridSpacing);
+            return wxRect(r.m_x, r.m_y, r.m_width, r.m_height);
+        }
 
 private:     // serialization functions
 
@@ -349,6 +386,22 @@ public:     // drawing functions
             center.y += double(acc.y)/getNodesCount();
             return center;
         }
+
+    //! Returns the bounding box for the devices of this circuit
+    //! as relative grid coordinates.
+    wxRect getRelativeBoundingBox() const
+        { 
+            wxRect bb;
+            bb.SetLeft(getLeftmostGridNodePosition());
+            bb.SetRight(getRightmostGridNodePosition());
+            bb.SetTop(getTopmostGridNodePosition());
+            bb.SetBottom(getBottommostGridNodePosition());
+            return bb; 
+        }
+
+    //! Returns the bounding box for the devices of this circuit
+    //! as absolute pixel coordinates.
+    virtual wxRect getRealBoundingBox(unsigned int gridSpacing) const = 0;
 };
 
 //! A generic electrical network.
@@ -492,13 +545,14 @@ public:     // drawing functions
 
     //! Returns the index of the first device whose (absolute) center point
     //! lies in the given rectangle.
-    int hitTest(const wxRealPoint& gridPt, double tolerance) const
+    int hitTest(const wxPoint& gridPt, unsigned int gridSize, unsigned int tolerance) const
     {
         for (size_t i=0; i<m_devices.size(); i++)
         {
-            wxRealPoint pt = m_devices[i]->getGridCenterPoint();
-            if (fabs(pt.x - gridPt.x) <= tolerance &&
-                fabs(pt.y - gridPt.y) <= tolerance)
+            wxRect r = m_devices[i]->getRealBoundingBox(gridSize);
+            r.Inflate(tolerance, tolerance);
+            if (r.x < gridPt.x && r.y < gridPt.y &&
+                r.x+r.width >= gridPt.x && r.y+r.height >= gridPt.y)
                 return i;
         }
         return wxNOT_FOUND;
@@ -540,6 +594,11 @@ private:     // serialization functions
 public:
     svExternalPin(const svNode& node = "")
         { addNode(node); m_name = node; }
+
+    //! Returns nothing because the node name to which this pin is attached is already
+    //! printed by the draw() routine of svCircuit!
+    virtual wxString getDescription() const
+        { return ""; }
 
     unsigned int getNodesCount() const { return 1; }
 
@@ -583,6 +642,9 @@ public:
         setupGC(gc, gridSpacing, pen);
         gc->StrokePath(s_path);
     }
+
+    wxRect getRealBoundingBox(unsigned int gridSpacing) const
+        { return getRealBoundingBoxFromPath(s_path, gridSpacing); }
 };
 
 // ----------------------------------------------------------------------------
@@ -751,6 +813,9 @@ public:
         setupGC(gc, gridSpacing, pen);
         gc->StrokePath(s_path);
     }
+
+    wxRect getRealBoundingBox(unsigned int gridSpacing) const
+        { return getRealBoundingBoxFromPath(s_path, gridSpacing); }
 };
 
 class svResistor : public svPassiveDevice
@@ -798,6 +863,9 @@ public:
         setupGC(gc, gridSpacing, pen);
         gc->StrokePath(s_path);
     }
+
+    wxRect getRealBoundingBox(unsigned int gridSpacing) const
+        { return getRealBoundingBoxFromPath(s_path, gridSpacing); }
 };
 
 class svInductor : public svPassiveDevice
@@ -844,6 +912,9 @@ public:
         setupGC(gc, gridSpacing, pen);
         gc->StrokePath(s_path);
     }
+    
+    wxRect getRealBoundingBox(unsigned int gridSpacing) const
+        { return getRealBoundingBoxFromPath(s_path, gridSpacing); }
 };
 
 class svDiode : public svPassiveDevice
@@ -887,6 +958,9 @@ public:
         setupGC(gc, gridSpacing, pen);
         gc->StrokePath(s_path);
     }
+    
+    wxRect getRealBoundingBox(unsigned int gridSpacing) const
+        { return getRealBoundingBoxFromPath(s_path, gridSpacing); }
 };
 
 // ----------------------------------------------------------------------------
@@ -1105,6 +1179,9 @@ public:
             gc->FillPath(s_pathArrow, wxODDEVEN_RULE);
         }
     }
+
+    wxRect getRealBoundingBox(unsigned int gridSpacing) const
+        { return getRealBoundingBoxFromPath(s_path, gridSpacing); }
 };
 
 class svBJT : public svTransistorDevice
@@ -1186,6 +1263,9 @@ public:
             gc->FillPath(s_pathArrow, wxODDEVEN_RULE);
         }
     }
+    
+    wxRect getRealBoundingBox(unsigned int gridSpacing) const
+        { return getRealBoundingBoxFromPath(s_path, gridSpacing); }
 };
 
 class svJFET : public svTransistorDevice
@@ -1223,6 +1303,9 @@ public:
     {
         // TODO
     }
+    
+    wxRect getRealBoundingBox(unsigned int gridSpacing) const
+        { return getRealBoundingBoxFromPath(s_path, gridSpacing); }
 };
 
 // ----------------------------------------------------------------------------
@@ -1362,6 +1445,9 @@ public:
 
         return true;
     }
+
+    wxRect getRealBoundingBox(unsigned int gridSpacing) const
+        { return getRealBoundingBoxFromPath(s_pathIndipendent, gridSpacing); }
 };
 
 class svISource : public svIndipendentSource
@@ -1548,6 +1634,9 @@ public:
 
         return true;
     }
+
+    wxRect getRealBoundingBox(unsigned int gridSpacing) const
+        { return getRealBoundingBoxFromPath(s_pathDipendent, gridSpacing); }
 };
 
 class svESource : public svVoltageControlledSource
