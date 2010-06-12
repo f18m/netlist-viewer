@@ -59,11 +59,8 @@ enum
 // resources
 // ----------------------------------------------------------------------------
 
-// the application icon (under Windows and OS/2 it is in resources and even
-// though we could still include the XPM here it would be unused)
-#if !defined(__WXMSW__) && !defined(__WXPM__)
-    #include "icon.xpm"
-#endif
+#include "icon.xpm"
+#include "icon_small.xpm"
 
 // ----------------------------------------------------------------------------
 // private classes
@@ -241,7 +238,10 @@ wxEND_EVENT_TABLE()
 SpiceViewerFrame::SpiceViewerFrame(const wxString& title)
                             : wxFrame(NULL, wxID_ANY, title)
 {
-    SetIcon(wxICON(appicon));    // set the frame icon
+    wxIconBundle bundle;
+    bundle.AddIcon(wxIcon(icon_xpm));
+    bundle.AddIcon(wxIcon(icon_small_xpm));
+    SetIcons(bundle);
 
     wxMenu *fileMenu = new wxMenu;
     fileMenu->AppendCheckItem(SpiceViewer_ShowGrid, "&Show grid", 
