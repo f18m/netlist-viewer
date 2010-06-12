@@ -31,6 +31,9 @@
 
 #include <wx/aboutdlg.h>
 #include <wx/dcbuffer.h>
+#include <wx/stdpaths.h>
+#include <wx/filename.h>
+
 #include "netlist.h"
 #include <fstream>
 
@@ -284,8 +287,9 @@ void SpiceViewerFrame::OnShowGrid(wxCommandEvent& event)
 
 void SpiceViewerFrame::OnOpenNetlist(wxCommandEvent& WXUNUSED(event))
 {
+    wxString defaultPath = wxFileName(wxStandardPaths::Get().GetExecutablePath()).GetPath();
     wxFileDialog 
-        openFileDialog(this, "Open SPICE netlist", "", "",
+        openFileDialog(this, "Open SPICE netlist", defaultPath, "",
                        "SPICE netlists (*.net;*.cir;*.ckt)|*.net;*.cir;*.ckt", wxFD_OPEN|wxFD_FILE_MUST_EXIST);
 
     if (openFileDialog.ShowModal() == wxID_CANCEL)
@@ -321,8 +325,9 @@ void SpiceViewerFrame::OnOpenNetlist(wxCommandEvent& WXUNUSED(event))
 
 void SpiceViewerFrame::OnOpenNVS(wxCommandEvent& WXUNUSED(event))
 {
+    wxString defaultPath = wxFileName(wxStandardPaths::Get().GetExecutablePath()).GetPath();
     wxFileDialog 
-        openFileDialog(this, "Open NetlistViewer schematic", "", "",
+        openFileDialog(this, "Open NetlistViewer schematic", defaultPath, "",
                        "NetlistViewer schematic (*.nvs)|*.nvs", wxFD_OPEN|wxFD_FILE_MUST_EXIST);
 
     if (openFileDialog.ShowModal() == wxID_CANCEL)
