@@ -89,7 +89,8 @@ Section "install" ; No components page, name is not important
   SetOutPath "$INSTDIR"
   File gnugpl.txt
   File ..\src\icon.ico
-  File ..\NetlistViewer.exe
+  File ..\build\win\NetlistViewer.exe
+  File ..\build\win\NetlistViewer.exe.manifest
   File *.dll
   File *.manifest
     ; CRT manifests always need to be copied to allow installations on WinXP systems

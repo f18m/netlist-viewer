@@ -23,7 +23,7 @@
 	<Configurations>
 		<Configuration
 			Name="Static Release|Win32"
-			OutputDirectory="..\.."
+			OutputDirectory="."
 			IntermediateDirectory="vcmswu\spice_viewer"
 			ConfigurationType="1"
 			UseOfMFC="0"
@@ -57,7 +57,7 @@
 				RuntimeLibrary="2"
 				RuntimeTypeInfo="true"
 				ObjectFile="vcmswu\spice_viewer\"
-				ProgramDataBaseFileName="..\..\NetlistViewer.pdb"
+				ProgramDataBaseFileName=".\NetlistViewer.pdb"
 				WarningLevel="4"
 				SuppressStartupBanner="true"
 				DebugInformationFormat="0"
@@ -78,12 +78,12 @@
 				Name="VCLinkerTool"
 				AdditionalOptions=""
 				AdditionalDependencies="wxmsw29u_adv.lib wxmsw29u_core.lib wxbase29u.lib wxtiff.lib wxjpeg.lib wxpng.lib wxzlib.lib wxregexu.lib wxexpat.lib kernel32.lib user32.lib gdi32.lib comdlg32.lib winspool.lib winmm.lib shell32.lib comctl32.lib ole32.lib oleaut32.lib uuid.lib rpcrt4.lib advapi32.lib wsock32.lib"
-				OutputFile="..\..\NetlistViewer.exe"
+				OutputFile=".\NetlistViewer.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="$(WXWIN)\lib\vc_lib;$(BOOST_DIR)\stage\lib"
 				GenerateManifest="true"
-				ProgramDatabaseFile="..\..\NetlistViewer.pdb"
+				ProgramDatabaseFile=".\NetlistViewer.pdb"
 				SubSystem="2"
 				TargetMachine="1"
 			/>
@@ -98,7 +98,7 @@
 			/>
 			<Tool
 				Name="VCBscMakeTool"
-				OutputFile="..\..\spice_viewer.bsc"
+				OutputFile=".\spice_viewer.bsc"
 				SuppressStartupBanner="true"
 			/>
 			<Tool
@@ -113,7 +113,7 @@
 		</Configuration>
 		<Configuration
 			Name="Static Debug|Win32"
-			OutputDirectory="..\.."
+			OutputDirectory="."
 			IntermediateDirectory="vcmswud\spice_viewer"
 			ConfigurationType="1"
 			UseOfMFC="0"
@@ -149,7 +149,7 @@
 				BufferSecurityCheck="true"
 				RuntimeTypeInfo="true"
 				ObjectFile="vcmswud\spice_viewer\"
-				ProgramDataBaseFileName="..\..\NetlistViewer.pdb"
+				ProgramDataBaseFileName=".\NetlistViewer.pdb"
 				WarningLevel="4"
 				SuppressStartupBanner="true"
 				DebugInformationFormat="3"
@@ -170,13 +170,13 @@
 				Name="VCLinkerTool"
 				AdditionalOptions=""
 				AdditionalDependencies="wxmsw29ud_adv.lib wxmsw29ud_core.lib wxbase29ud.lib wxtiffd.lib wxjpegd.lib wxpngd.lib wxzlibd.lib wxregexud.lib wxexpatd.lib kernel32.lib user32.lib gdi32.lib comdlg32.lib winspool.lib winmm.lib shell32.lib comctl32.lib ole32.lib oleaut32.lib uuid.lib rpcrt4.lib advapi32.lib wsock32.lib"
-				OutputFile="..\..\NetlistViewer.exe"
+				OutputFile=".\NetlistViewer.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="$(WXWIN)\lib\vc_lib;$(BOOST_DIR)\stage\lib"
 				GenerateManifest="true"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile="..\..\NetlistViewer.pdb"
+				ProgramDatabaseFile=".\NetlistViewer.pdb"
 				SubSystem="2"
 				TargetMachine="1"
 			/>
@@ -191,7 +191,7 @@
 			/>
 			<Tool
 				Name="VCBscMakeTool"
-				OutputFile="..\..\spice_viewer.bsc"
+				OutputFile=".\spice_viewer.bsc"
 				SuppressStartupBanner="true"
 			/>
 			<Tool
@@ -206,7 +206,7 @@
 		</Configuration>
 		<Configuration
 			Name="DLL Release|Win32"
-			OutputDirectory="..\.."
+			OutputDirectory="."
 			IntermediateDirectory="vcmswu_dll\spice_viewer"
 			ConfigurationType="1"
 			UseOfMFC="0"
@@ -240,7 +240,7 @@
 				RuntimeLibrary="2"
 				RuntimeTypeInfo="true"
 				ObjectFile="vcmswu_dll\spice_viewer\"
-				ProgramDataBaseFileName="..\..\NetlistViewer.pdb"
+				ProgramDataBaseFileName=".\NetlistViewer.pdb"
 				WarningLevel="4"
 				SuppressStartupBanner="true"
 				DebugInformationFormat="0"
@@ -261,12 +261,12 @@
 				Name="VCLinkerTool"
 				AdditionalOptions=""
 				AdditionalDependencies="wxmsw29u_adv.lib wxmsw29u_core.lib wxbase29u.lib wxtiff.lib wxjpeg.lib wxpng.lib wxzlib.lib wxregexu.lib wxexpat.lib kernel32.lib user32.lib gdi32.lib comdlg32.lib winspool.lib winmm.lib shell32.lib comctl32.lib ole32.lib oleaut32.lib uuid.lib rpcrt4.lib advapi32.lib wsock32.lib"
-				OutputFile="..\..\NetlistViewer.exe"
+				OutputFile=".\NetlistViewer.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="$(WXWIN)\lib\vc_dll;$(BOOST_DIR)\stage\lib"
 				GenerateManifest="true"
-				ProgramDatabaseFile="..\..\NetlistViewer.pdb"
+				ProgramDatabaseFile=".\NetlistViewer.pdb"
 				SubSystem="2"
 				TargetMachine="1"
 			/>
@@ -281,7 +281,7 @@
 			/>
 			<Tool
 				Name="VCBscMakeTool"
-				OutputFile="..\..\spice_viewer.bsc"
+				OutputFile=".\spice_viewer.bsc"
 				SuppressStartupBanner="true"
 			/>
 			<Tool
@@ -296,7 +296,7 @@
 		</Configuration>
 		<Configuration
 			Name="DLL Debug|Win32"
-			OutputDirectory="..\.."
+			OutputDirectory="."
 			IntermediateDirectory="vcmswud_dll\spice_viewer"
 			ConfigurationType="1"
 			UseOfMFC="0"
@@ -332,7 +332,7 @@
 				BufferSecurityCheck="true"
 				RuntimeTypeInfo="true"
 				ObjectFile="vcmswud_dll\spice_viewer\"
-				ProgramDataBaseFileName="..\..\NetlistViewer.pdb"
+				ProgramDataBaseFileName=".\NetlistViewer.pdb"
 				WarningLevel="4"
 				SuppressStartupBanner="true"
 				DebugInformationFormat="3"
@@ -353,13 +353,13 @@
 				Name="VCLinkerTool"
 				AdditionalOptions=""
 				AdditionalDependencies="wxmsw29ud_adv.lib wxmsw29ud_core.lib wxbase29ud.lib wxtiffd.lib wxjpegd.lib wxpngd.lib wxzlibd.lib wxregexud.lib wxexpatd.lib kernel32.lib user32.lib gdi32.lib comdlg32.lib winspool.lib winmm.lib shell32.lib comctl32.lib ole32.lib oleaut32.lib uuid.lib rpcrt4.lib advapi32.lib wsock32.lib"
-				OutputFile="..\..\NetlistViewer.exe"
+				OutputFile=".\NetlistViewer.exe"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="$(WXWIN)\lib\vc_dll;$(BOOST_DIR)\stage\lib"
 				GenerateManifest="true"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile="..\..\NetlistViewer.pdb"
+				ProgramDatabaseFile=".\NetlistViewer.pdb"
 				SubSystem="2"
 				TargetMachine="1"
 			/>
@@ -374,7 +374,7 @@
 			/>
 			<Tool
 				Name="VCBscMakeTool"
-				OutputFile="..\..\spice_viewer.bsc"
+				OutputFile=".\spice_viewer.bsc"
 				SuppressStartupBanner="true"
 			/>
 			<Tool

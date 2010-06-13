@@ -159,18 +159,18 @@ $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX):
 
 ### Targets: ###
 
-all: test_for_selected_wxbuild ..\..\NetlistViewer.exe
+all: test_for_selected_wxbuild .\NetlistViewer.exe
 
 clean: 
 	-if exist $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\*.obj del $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\*.obj
 	-if exist $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\*.res del $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\*.res
 	-if exist $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\*.csm del $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\*.csm
-	-if exist ..\..\NetlistViewer.exe del ..\..\NetlistViewer.exe
-	-if exist ..\..\NetlistViewer.tds del ..\..\NetlistViewer.tds
-	-if exist ..\..\NetlistViewer.ilc del ..\..\NetlistViewer.ilc
-	-if exist ..\..\NetlistViewer.ild del ..\..\NetlistViewer.ild
-	-if exist ..\..\NetlistViewer.ilf del ..\..\NetlistViewer.ilf
-	-if exist ..\..\NetlistViewer.ils del ..\..\NetlistViewer.ils
+	-if exist .\NetlistViewer.exe del .\NetlistViewer.exe
+	-if exist .\NetlistViewer.tds del .\NetlistViewer.tds
+	-if exist .\NetlistViewer.ilc del .\NetlistViewer.ilc
+	-if exist .\NetlistViewer.ild del .\NetlistViewer.ild
+	-if exist .\NetlistViewer.ilf del .\NetlistViewer.ilf
+	-if exist .\NetlistViewer.ils del .\NetlistViewer.ils
 
 test_for_selected_wxbuild: 
 	@if not exist $(WX_DIR)$(WXLIBPATH)\msw$(WXLIBPOSTFIX)\wx\setup.h \
@@ -184,7 +184,7 @@ test_for_selected_wxbuild:
 	@if not exist $(WX_DIR)$(WXLIBPATH)\msw$(WXLIBPOSTFIX)\wx\setup.h \
 	exit 1
 
-..\..\NetlistViewer.exe: $(SPICE_VIEWER_OBJECTS)  $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_resources.res
+.\NetlistViewer.exe: $(SPICE_VIEWER_OBJECTS)  $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_resources.res
 	ilink32 -Tpe -q  -L$(BCCDIR)\lib -L$(BCCDIR)\lib\psdk -L$(WX_DIR)$(WXLIBPATH)  -aa $(____spice_viewer__DEBUGINFO) -L$(BOOST_DIR)\stage\lib $(LDFLAGS) @&&|
 	c0w32.obj $(SPICE_VIEWER_OBJECTS),$@,, wxmsw$(WX_VERSION)$(WXLIBPOSTFIX)_adv.lib wxmsw$(WX_VERSION)$(WXLIBPOSTFIX)_core.lib wxbase$(WX_VERSION)$(WXLIBPOSTFIX).lib wxtiff$(WX3RDPARTYLIBPOSTFIX).lib wxjpeg$(WX3RDPARTYLIBPOSTFIX).lib wxpng$(WX3RDPARTYLIBPOSTFIX).lib wxzlib$(WX3RDPARTYLIBPOSTFIX).lib wxregex$(WXLIBPOSTFIX).lib wxexpat$(WX3RDPARTYLIBPOSTFIX).lib ole2w32.lib oleacc.lib import32.lib cw32.lib,, $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_resources.res
 |
