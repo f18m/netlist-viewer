@@ -1086,7 +1086,7 @@ public:
     //    J{name} {d} {g} {s} {model} [{area]} 
     //    M{name} {d} {g} {s} {sub} {mdl}  [L={value}]  [W={value}] 
     //    Q{name} {c} {b} {e} [{subs}] {model} [{area}]  
-    bool parseSPICEProperty(unsigned int j, const std::string& prop)
+    bool parseSPICEProperty(unsigned int WXUNUSED(j), const std::string& prop)
     {
         m_modelName = prop;
 
@@ -1226,9 +1226,9 @@ public:
         s_pathArrow = gc->CreatePath();
         wxASSERT(!s_pathArrow.IsNull());
 
-        const double arrowSz = gridSpacing/15;
-        s_pathArrow.MoveToPoint(-arrowSz*3,-arrowSz);
-        s_pathArrow.AddLineToPoint(-arrowSz*3,+arrowSz);
+        const double arrowSz = gridSpacing/10;
+        s_pathArrow.MoveToPoint(-arrowSz*2,-arrowSz);
+        s_pathArrow.AddLineToPoint(-arrowSz*2,+arrowSz);
         s_pathArrow.AddLineToPoint(0,0);
         s_pathArrow.CloseSubpath();
     }
@@ -1287,7 +1287,7 @@ public:
     std::string getHumanReadableDesc() const { return "JFET"; }
     svBaseDevice* clone() const { return new svJFET(*this); }
 
-    static void initGraphics(wxGraphicsContext* gc, unsigned int gridSpacing)
+    static void initGraphics(wxGraphicsContext* WXUNUSED(gc), unsigned int WXUNUSED(gridSpacing))
     {
         /*
         const wxRealPoint& collectorPos = getDrainGridNodePosition();
@@ -1299,7 +1299,7 @@ public:
         // TODO
     }
 
-    void draw(wxGraphicsContext* gc, unsigned int gridSpacing, const wxPen& pen) const
+    void draw(wxGraphicsContext* WXUNUSED(gc), unsigned int WXUNUSED(gridSpacing), const wxPen& WXUNUSED(pen)) const
     {
         // TODO
     }
