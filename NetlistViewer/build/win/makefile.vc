@@ -67,13 +67,13 @@ SPICE_VIEWER_CFLAGS = /MD$(____spice_viewer__DEBUGINFO_9) /DWIN32 \
 	/I$(WX_DIR)$(__WXLIBPATH_FILENAMES)\msw$(WXLIBPOSTFIX) \
 	/I$(WX_DIR)\include /D_WINDOWS $(____spice_viewer__OPT_5) \
 	$(____spice_viewer__DEBUGINFO_6) $(______spice_viewer__DEBUGINFO_8_p) \
-	/Fd..\..\NetlistViewer.pdb /W4 /Isrc /I$(BOOST_DIR) $(CPPFLAGS) $(CFLAGS)
+	/Fd.\NetlistViewer.pdb /W4 /Isrc /I$(BOOST_DIR) $(CPPFLAGS) $(CFLAGS)
 SPICE_VIEWER_CXXFLAGS = /MD$(____spice_viewer__DEBUGINFO_9) /DWIN32 \
 	$(____WX_SHARED_2_p) /D_UNICODE $(__WXDEBUG_DEFINE_p) /D__WXMSW__ \
 	/I$(WX_DIR)$(__WXLIBPATH_FILENAMES)\msw$(WXLIBPOSTFIX) \
 	/I$(WX_DIR)\include /D_WINDOWS $(____spice_viewer__OPT_5) \
 	$(____spice_viewer__DEBUGINFO_6) $(______spice_viewer__DEBUGINFO_8_p) \
-	/Fd..\..\NetlistViewer.pdb /W4 /Isrc /I$(BOOST_DIR) /GR /EHsc $(CPPFLAGS) \
+	/Fd.\NetlistViewer.pdb /W4 /Isrc /I$(BOOST_DIR) /GR /EHsc $(CPPFLAGS) \
 	$(CXXFLAGS)
 SPICE_VIEWER_OBJECTS =  \
 	$(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_app.obj \
@@ -209,15 +209,15 @@ $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX):
 
 ### Targets: ###
 
-all: test_for_selected_wxbuild ..\..\NetlistViewer.exe
+all: test_for_selected_wxbuild .\NetlistViewer.exe
 
 clean: 
 	-if exist $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\*.obj del $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\*.obj
 	-if exist $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\*.res del $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\*.res
 	-if exist $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\*.pch del $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\*.pch
-	-if exist ..\..\NetlistViewer.exe del ..\..\NetlistViewer.exe
-	-if exist ..\..\NetlistViewer.ilk del ..\..\NetlistViewer.ilk
-	-if exist ..\..\NetlistViewer.pdb del ..\..\NetlistViewer.pdb
+	-if exist .\NetlistViewer.exe del .\NetlistViewer.exe
+	-if exist .\NetlistViewer.ilk del .\NetlistViewer.ilk
+	-if exist .\NetlistViewer.pdb del .\NetlistViewer.pdb
 
 test_for_selected_wxbuild: 
 	@if not exist $(WX_DIR)$(WXLIBPATH)\msw$(WXLIBPOSTFIX)\wx\setup.h \
@@ -231,8 +231,8 @@ test_for_selected_wxbuild:
 	@if not exist $(WX_DIR)$(WXLIBPATH)\msw$(WXLIBPOSTFIX)\wx\setup.h \
 	exit 1
 
-..\..\NetlistViewer.exe: $(SPICE_VIEWER_OBJECTS) $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_resources.res
-	link /NOLOGO /OUT:$@  /LIBPATH:$(WX_DIR)$(__WXLIBPATH_FILENAMES_2) $(WXMACHINE_FLAG) /SUBSYSTEM:WINDOWS $(____spice_viewer__DEBUGINFO_7) /pdb:"..\..\NetlistViewer.pdb" $(____spice_viewer__DEBUGINFO_11) /LIBPATH:$(BOOST_DIR)\stage\lib $(LDFLAGS) @<<
+.\NetlistViewer.exe: $(SPICE_VIEWER_OBJECTS) $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_resources.res
+	link /NOLOGO /OUT:$@  /LIBPATH:$(WX_DIR)$(__WXLIBPATH_FILENAMES_2) $(WXMACHINE_FLAG) /SUBSYSTEM:WINDOWS $(____spice_viewer__DEBUGINFO_7) /pdb:".\NetlistViewer.pdb" $(____spice_viewer__DEBUGINFO_11) /LIBPATH:$(BOOST_DIR)\stage\lib $(LDFLAGS) @<<
 	$(SPICE_VIEWER_OBJECTS) $(SPICE_VIEWER_RESOURCES)  wxmsw$(WX_VERSION)$(WXLIBPOSTFIX)_adv.lib wxmsw$(WX_VERSION)$(WXLIBPOSTFIX)_core.lib wxbase$(WX_VERSION)$(WXLIBPOSTFIX).lib wxtiff$(WX3RDPARTYLIBPOSTFIX).lib wxjpeg$(WX3RDPARTYLIBPOSTFIX).lib wxpng$(WX3RDPARTYLIBPOSTFIX).lib wxzlib$(WX3RDPARTYLIBPOSTFIX).lib wxregex$(WXLIBPOSTFIX).lib wxexpat$(WX3RDPARTYLIBPOSTFIX).lib kernel32.lib user32.lib gdi32.lib comdlg32.lib winspool.lib winmm.lib shell32.lib comctl32.lib ole32.lib oleaut32.lib uuid.lib rpcrt4.lib advapi32.lib wsock32.lib oleacc.lib
 <<
 

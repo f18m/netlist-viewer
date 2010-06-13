@@ -157,7 +157,7 @@ $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX) :
 
 ### Targets: ###
 
-all : .SYMBOLIC test_for_selected_wxbuild ..\..\NetlistViewer.exe
+all : .SYMBOLIC test_for_selected_wxbuild .\NetlistViewer.exe
 
 clean : .SYMBOLIC 
 	-if exist $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\*.obj del $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\*.obj
@@ -165,7 +165,7 @@ clean : .SYMBOLIC
 	-if exist $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\*.lbc del $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\*.lbc
 	-if exist $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\*.ilk del $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\*.ilk
 	-if exist $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\*.pch del $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\*.pch
-	-if exist ..\..\NetlistViewer.exe del ..\..\NetlistViewer.exe
+	-if exist .\NetlistViewer.exe del .\NetlistViewer.exe
 
 test_for_selected_wxbuild :  
 	@if not exist $(WX_DIR)$(WXLIBPATH)\msw$(WXLIBPOSTFIX)\wx\setup.h \
@@ -179,7 +179,7 @@ test_for_selected_wxbuild :
 	@if not exist $(WX_DIR)$(WXLIBPATH)\msw$(WXLIBPOSTFIX)\wx\setup.h \
 	exit 1
 
-..\..\NetlistViewer.exe :  $(SPICE_VIEWER_OBJECTS) $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_resources.res
+.\NetlistViewer.exe :  $(SPICE_VIEWER_OBJECTS) $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer_resources.res
 	@%create $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer.lbc
 	@%append $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer.lbc option quiet
 	@%append $(COMPILER_PREFIX)msw$(WXLIBPOSTFIX)$(_BUILDDIR_SHARED_SUFFIX)\spice_viewer.lbc name $^@
