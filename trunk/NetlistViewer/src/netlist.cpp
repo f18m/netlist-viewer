@@ -31,9 +31,6 @@
 
 #include "netlist.h"
 
-#ifdef __WXMSW__
-    #include <wx/msw/msvcrt.h>      // useful to catch memory leaks when compiling under MSVC 
-#endif
 
 /*
     For more informations about the SPICE netlist format please go to:
@@ -60,10 +57,12 @@ wxGraphicsPath svMOS::s_pathArrow;
 wxGraphicsPath svBJT::s_path;
 wxGraphicsPath svBJT::s_pathArrow;
 wxGraphicsPath svJFET::s_path;
+wxGraphicsPath svJFET::s_pathArrow;
 wxGraphicsPath svSource::s_pathIndipendent;
 wxGraphicsPath svSource::s_pathDipendent;
 wxGraphicsPath svSource::s_pathCurrentArrow;
 wxGraphicsPath svSource::s_pathVoltageSigns;
+wxGraphicsPath svCircuit::s_pathGround;
 
 wxPoint svInvalidPoint = wxPoint(-1e10, -1e10);
 svNode svGroundNode = svNode("0");      // SPICE conventional name for GND
@@ -590,20 +589,18 @@ void svCircuit::updateBoundingBox()
     m_bb.height -= m_bb.y;
 }
 
+void svCircuit::initGraphics(wxGraphicsContext*gc, unsigned int gridSize)
+{
+    s_pathGround = gc->CreatePath();
+
+    double w = gridSize/3.0, d = gridSize/10.0;
+    drawLine(s_pathGround, wxRealPoint(-w,0), wxRealPoint(w,0));
+    drawLine(s_pathGround, wxRealPoint(-w*2/4,d), wxRealPoint(w*2/4,d));
+    drawLine(s_pathGround, wxRealPoint(-w*1/4,2*d), wxRealPoint(w*1/4,2*d));
+}
+
 void svCircuit::draw(wxGraphicsContext* gc, unsigned int gridSize, int selectedDevice) const
 {
-    static wxGraphicsPath pathGround;
-
-    if (pathGround.IsNull())
-    {
-        pathGround = gc->CreatePath();
-
-        double w = gridSize/3.0, d = gridSize/10.0;
-        drawLine(pathGround, wxRealPoint(-w,0), wxRealPoint(w,0));
-        drawLine(pathGround, wxRealPoint(-w*2/4,d), wxRealPoint(w*2/4,d));
-        drawLine(pathGround, wxRealPoint(-w*1/4,2*d), wxRealPoint(w*1/4,2*d));
-    }
-
     // draw all the devices
     wxPen normal(*wxBLACK, 2),
           selected(*wxRED, 2);
@@ -633,7 +630,7 @@ void svCircuit::draw(wxGraphicsContext* gc, unsigned int gridSize, int selectedD
             gc->SetTransform(m);
 
             if (m_devices[i]->getNode(j) == svGroundNode)
-                gc->StrokePath(pathGround);
+                gc->StrokePath(s_pathGround);
             else
                 gc->DrawText(m_devices[i]->getNode(j), 0, 0, 0);
         }

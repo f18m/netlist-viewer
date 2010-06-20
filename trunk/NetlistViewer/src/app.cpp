@@ -37,10 +37,6 @@
 #include "netlist.h"
 #include <fstream>
 
-#ifdef __WXMSW__
-    #include <wx/msw/msvcrt.h>      // useful to catch memory leaks when compiling under MSVC 
-#endif
-
 // ----------------------------------------------------------------------------
 // constants
 // ----------------------------------------------------------------------------
@@ -221,6 +217,7 @@ bool SpiceViewerApp::OnInit()
 int SpiceViewerApp::OnExit()
 {
     svDeviceFactory::unregisterAllDevices();
+    svDeviceFactory::releaseGraphics();
 
     return wxApp::OnExit();
 }

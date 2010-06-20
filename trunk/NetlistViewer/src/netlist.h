@@ -30,10 +30,6 @@
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/base_object.hpp>
 
-#ifdef __WXMSW__
-    #include <wx/msw/msvcrt.h>      // useful to catch memory leaks when compiling under MSVC 
-#endif
-
 // ----------------------------------------------------------------------------
 // typedefs & enums
 // ----------------------------------------------------------------------------
@@ -423,7 +419,9 @@ class svCircuit
     //! Each device has two or more nodes connected with the elements of the m_nodes array.
     std::vector<svBaseDevice*> m_devices;
 
-    
+    //! The ground symbol.
+    static wxGraphicsPath s_pathGround;
+
     void assign(const svCircuit& tocopy)
     {
         release();
@@ -538,6 +536,11 @@ public:     // drawing functions
     const wxRect& getBoundingBox() const
         { return m_bb; }
 
+    static void initGraphics(wxGraphicsContext* gc, unsigned int gridSpacing);
+
+    static void releaseGraphics()
+        { s_pathGround.UnRef(); }
+
     //! Draws this circuit on the given DC, with the given grid size
     //! (in pixels).
     void draw(wxGraphicsContext* gc, unsigned int gridSpacing, 
@@ -637,6 +640,9 @@ public:
         s_path.AddCircle(nodePos.x, nodePos.y-2*l, l);
     }
     
+    static void releaseGraphics()
+        { s_path.UnRef(); }
+
     void draw(wxGraphicsContext* gc, unsigned int gridSpacing, const wxPen& pen) const
     {
         setupGC(gc, gridSpacing, pen);
@@ -807,6 +813,9 @@ public:
         drawLine(s_path, firstNodePos + wxRealPoint(-w, l), firstNodePos + wxRealPoint(w, l));
         drawLine(s_path, secondNodePos + wxRealPoint(-w, -l), secondNodePos + wxRealPoint(w, -l));
     }
+
+    static void releaseGraphics()
+        { s_path.UnRef(); }
     
     void draw(wxGraphicsContext* gc, unsigned int gridSpacing, const wxPen& pen) const
     {
@@ -858,6 +867,9 @@ public:
         drawLine(s_path, firstNodePos + wxRealPoint(0, 8*l), secondNodePos);
     }
 
+    static void releaseGraphics()
+        { s_path.UnRef(); }
+
     void draw(wxGraphicsContext* gc, unsigned int gridSpacing, const wxPen& pen) const
     {
         setupGC(gc, gridSpacing, pen);
@@ -906,6 +918,9 @@ public:
         s_path.MoveToPoint(firstNodePos.x, (firstNodePos.y+secondNodePos.y)/2 + 0.5*l);
         s_path.AddArc(firstNodePos.x, (firstNodePos.y+secondNodePos.y)/2, 0.5*l, M_PI/2, 3*M_PI/2, false);
     }
+    
+    static void releaseGraphics()
+        { s_path.UnRef(); }
 
     void draw(wxGraphicsContext* gc, unsigned int gridSpacing, const wxPen& pen) const
     {
@@ -952,6 +967,9 @@ public:
         drawLine(s_path, firstNodePos + wxRealPoint(-w, 2*l), firstNodePos + wxRealPoint(w, 2*l));
         drawLine(s_path, firstNodePos + wxRealPoint(0, 2*l), firstNodePos + wxRealPoint(0, 3*l));
     }
+
+    static void releaseGraphics()
+        { s_path.UnRef(); }
 
     void draw(wxGraphicsContext* gc, unsigned int gridSpacing, const wxPen& pen) const
     {
@@ -1149,6 +1167,9 @@ public:
         s_pathArrow.CloseSubpath();
     }
 
+    static void releaseGraphics()
+        { s_path.UnRef(); s_pathArrow.UnRef(); }
+
     void draw(wxGraphicsContext* gc, unsigned int gridSpacing, const wxPen& pen) const
     {
         const wxRealPoint& gatePos = getGateGridNodePosition()*gridSpacing;
@@ -1233,6 +1254,9 @@ public:
         s_pathArrow.CloseSubpath();
     }
 
+    static void releaseGraphics()
+        { s_path.UnRef(); s_pathArrow.UnRef(); }
+
     void draw(wxGraphicsContext* gc, unsigned int gridSpacing, const wxPen& pen) const
     {
         const wxRealPoint& basePos = getGateGridNodePosition()*gridSpacing;
@@ -1298,6 +1322,9 @@ public:
         */
         // TODO
     }
+
+    static void releaseGraphics()
+        { s_path.UnRef(); s_pathArrow.UnRef(); }
 
     void draw(wxGraphicsContext* WXUNUSED(gc), unsigned int WXUNUSED(gridSpacing), const wxPen& WXUNUSED(pen)) const
     {
@@ -1369,6 +1396,14 @@ public:
 
         // draw the minus
         drawLine(s_pathVoltageSigns, minusPos + wxRealPoint(-w,-1.5*r), minusPos + wxRealPoint(w,-1.5*r));
+    }
+
+    static void releaseGraphics()
+    { 
+        s_pathIndipendent.UnRef(); 
+        s_pathDipendent.UnRef();
+        s_pathCurrentArrow.UnRef();
+        s_pathVoltageSigns.UnRef();
     }
 
     void drawCurrentArrow(wxGraphicsContext* gc, unsigned int gridSpacing, const wxPen& pen) const
@@ -1452,9 +1487,6 @@ public:
 
 class svISource : public svIndipendentSource
 {
-    //! The graphics path. Filled by initGraphics(), it's used by draw() for painting.
-    static wxGraphicsPath s_path, s_pathArrow;
-
 private:     // serialization functions
     friend class boost::serialization::access;
 
@@ -1480,9 +1512,6 @@ public:
 
 class svVSource : public svIndipendentSource
 {
-    //! The graphics path. Filled by initGraphics(), it's used by draw() for painting.
-    static wxGraphicsPath s_path;
-
 private:     // serialization functions
     friend class boost::serialization::access;
 
@@ -1761,6 +1790,24 @@ public:
             svVSource::initGraphics(gc, gridSpacing);
             svGSource::initGraphics(gc, gridSpacing);
             svESource::initGraphics(gc, gridSpacing);
+            svCircuit::initGraphics(gc, gridSpacing);
+        }
+
+    static void releaseGraphics()
+        {
+            svExternalPin::releaseGraphics();
+            svCapacitor::releaseGraphics();
+            svResistor::releaseGraphics();
+            svInductor::releaseGraphics();
+            svDiode::releaseGraphics();
+            svMOS::releaseGraphics();
+            svBJT::releaseGraphics();
+            svJFET::releaseGraphics();
+            svISource::releaseGraphics();
+            svVSource::releaseGraphics();
+            svGSource::releaseGraphics();
+            svESource::releaseGraphics();
+            svCircuit::releaseGraphics();
         }
 
     static void unregisterAllDevices()
