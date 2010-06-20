@@ -1,5 +1,5 @@
 /////////////////////////////////////////////////////////////////////////////
-// Name:        netlist.c
+// Name:        netlist.cpp
 // Purpose:     SPICE netlist parsing & processing
 // Author:      Francesco Montorsi
 // Created:     30/05/2010
