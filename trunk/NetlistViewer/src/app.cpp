@@ -51,6 +51,8 @@ enum
     SpiceViewer_Export,
     SpiceViewer_OpenNetlist = wxID_OPEN,
     SpiceViewer_Quit = wxID_EXIT,
+
+    SpiceViewer_Help = wxID_HELP,
     SpiceViewer_About = wxID_ABOUT
 };
 
@@ -142,12 +144,14 @@ public:
     SpiceViewerFrame(const wxString& title);
 
     // event handlers (these functions should _not_ be virtual)
+    void OnShowGrid(wxCommandEvent& event);
     void OnOpenNetlist(wxCommandEvent& event);
     void OnOpenNVS(wxCommandEvent& event);
     void OnExportNVS(wxCommandEvent& event);
     void OnQuit(wxCommandEvent& event);
+
+    void OnHelp(wxCommandEvent& event);
     void OnAbout(wxCommandEvent& event);
-    void OnShowGrid(wxCommandEvent& event);
 
 private:
     SpiceViewerCanvas* m_canvas;
@@ -232,6 +236,8 @@ wxBEGIN_EVENT_TABLE(SpiceViewerFrame, wxFrame)
     EVT_MENU(SpiceViewer_OpenNVS,     SpiceViewerFrame::OnOpenNVS)
     EVT_MENU(SpiceViewer_Export,      SpiceViewerFrame::OnExportNVS)
     EVT_MENU(SpiceViewer_Quit,        SpiceViewerFrame::OnQuit)
+
+    EVT_MENU(SpiceViewer_Help,        SpiceViewerFrame::OnHelp)
     EVT_MENU(SpiceViewer_About,       SpiceViewerFrame::OnAbout)
 wxEND_EVENT_TABLE()
 
@@ -256,7 +262,8 @@ SpiceViewerFrame::SpiceViewerFrame(const wxString& title)
         // TODO: export routine for gEDA: http://geda.seul.org/wiki/geda:file_format_spec
 
     wxMenu *helpMenu = new wxMenu;
-    helpMenu->Append(SpiceViewer_About, "&About...\tF1", "Show about dialog");
+    helpMenu->Append(SpiceViewer_Help, "&Help...\tF1", "Show help page");
+    helpMenu->Append(SpiceViewer_About, "&About...", "Show about dialog");
 
     // now append the freshly created menu to the menu bar...
     wxMenuBar *menuBar = new wxMenuBar();
@@ -394,6 +401,14 @@ void SpiceViewerFrame::OnExportNVS(wxCommandEvent& WXUNUSED(event))
 void SpiceViewerFrame::OnQuit(wxCommandEvent& WXUNUSED(event))
 {
     Close(true /* force the frame to close */);
+}
+
+void SpiceViewerFrame::OnHelp(wxCommandEvent& WXUNUSED(event))
+{
+#define HELP_PAGE       "https://sourceforge.net/apps/trac/netlistviewer/wiki/HelpPage"
+
+    if (!wxLaunchDefaultBrowser(HELP_PAGE))
+        wxLogError("Could not open the URL '%s'... please open it manually.", HELP_PAGE);
 }
 
 void SpiceViewerFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
