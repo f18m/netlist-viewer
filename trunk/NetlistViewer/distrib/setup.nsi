@@ -61,6 +61,11 @@
   
   ;!insertmacro MUI_UNPAGE_CONFIRM
   ;!insertmacro MUI_UNPAGE_INSTFILES
+  Page license
+  Page directory
+  Page instfiles
+  UninstPage uninstConfirm
+  UninstPage instfiles
   
 ; -------------------------------------------------------------------------------------------------
 ; Interface Settings
@@ -77,7 +82,7 @@
   VIAddVersionKey "LegalCopyright"   "© ${PRODUCT_NAME} Team"
   VIAddVersionKey "FileDescription"  "Text to schematic conversion of SPICE netlists"
   VIAddVersionKey "FileVersion"      "${PRODUCT_VERSION}"
-  VIProductVersion                                         "${PRODUCT_VERSION}.0.0" 
+  VIProductVersion                   "${PRODUCT_VERSION}.0.0" 
 
 ; -------------------------------------------------------------------------------------------------
 ; Installer Sections
@@ -91,8 +96,8 @@ Section "install" ; No components page, name is not important
   File ..\src\icon.ico
   File ..\build\win\NetlistViewer.exe
   File ..\build\win\NetlistViewer.exe.manifest
-  File *.dll
-  File *.manifest
+  File ${INSTALLER_MODE}\*.dll
+  File ${INSTALLER_MODE}\*.manifest
     ; CRT manifests always need to be copied to allow installations on WinXP systems
 
   SetOutPath "$INSTDIR\examples"
