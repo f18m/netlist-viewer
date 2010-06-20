@@ -26,6 +26,8 @@
             The directory where Boost library is installed
         </description>
     </option>
+
+    <set var="MSVS_EMBED_MANIFEST">false</set>    
     
     
     <!--                                                            -->
