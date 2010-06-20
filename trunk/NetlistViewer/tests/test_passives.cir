@@ -1,8 +1,8 @@
 .SUBCKT test_passives TheBigNode
 
-R1 TheBigNode 0
-C1 TheBigNode 0
-L1 TheBigNode 0
+R1 TheBigNode 0 1k
+C1 TheBigNode 0 1p
+L1 TheBigNode 0 1u
 
 .ENDS
 
