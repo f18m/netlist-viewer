@@ -6,7 +6,7 @@
 
     <!-- List of output formats to generate: -->
     <add-formats>
-        borland,mingw,msvc,watcom,msvs2008prj
+        borland,mingw,msvc,watcom,msvs2008prj,gnu
     </add-formats>
 
     <add-flags>-I $(envvar('WXWIN'))/build/bakefiles/wxpresets</add-flags>
@@ -17,6 +17,9 @@
     </add-flags>
     <add-flags formats="autoconf">
         -DAUTOCONF_MACROS_FILE=../../autoconf_inc.m4
+    </add-flags>
+    <add-flags formats="gnu">
+        -o../linux/Makefile
     </add-flags>
     
     <add-flags formats="borland">

@@ -19,13 +19,17 @@
     <set-srcdir>../..</set-srcdir>
     <set-wxlike-builddir/>
 
-    <!-- The directory where Boost is installed: -->
-    <option name="BOOST_DIR" category="path" never_empty="1">
-        <default-value>$(DOLLAR)(BOOST_DIR)</default-value>
-        <description>
-            The directory where Boost library is installed
-        </description>
-    </option>
+    <set var="BOOST_DEFAULT_DIR">$(DOLLAR)(BOOST_DIR)</set>
+
+    <if cond="FORMAT!='gnu'">
+        <!-- The directory where Boost is installed: -->
+        <option name="BOOST_DIR" category="path" never_empty="1">
+            <default-value>$(BOOST_DEFAULT_DIR)</default-value>
+            <description>
+              The directory where Boost library is installed
+            </description>
+        </option>
+    </if>
 
     <set var="MSVS_EMBED_MANIFEST">false</set>    
     
@@ -40,8 +44,11 @@
         <warnings>max</warnings>
     
         <include>src</include>
-        <include>$(BOOST_DIR)</include>
-        <lib-path>$(BOOST_DIR)/stage/lib</lib-path>
+
+        <if cond="FORMAT!='gnu'">
+            <include>$(BOOST_DIR)</include>
+            <lib-path>$(BOOST_DIR)/stage/lib</lib-path>
+        </if>
     
         <sources>$(fileList('src/*.c*'))</sources>
         <headers>$(fileList('src/*.h'))</headers>
