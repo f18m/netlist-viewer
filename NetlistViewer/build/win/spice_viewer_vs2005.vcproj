@@ -8,9 +8,9 @@
 -->
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
+	Version="8.00"
 	Name="spice_viewer"
-	ProjectGUID="{086742E8-F93A-55FE-A43E-2EF29252E722}"
+	ProjectGUID="{E7300F6D-01B4-51F3-84EC-52648DCA44B9}"
 	>
 	<Platforms>
 		<Platform
@@ -49,7 +49,6 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalOptions="/MP"
 				Optimization="2"
 				AdditionalIncludeDirectories="$(WXWIN)\lib\vc_lib\mswu;$(WXWIN)\include;src;$(BOOST_DIR)"
 				PreprocessorDefinitions="WIN32;_UNICODE;__WXMSW__;_WINDOWS"
@@ -60,6 +59,7 @@
 				ProgramDataBaseFileName=".\NetlistViewer.pdb"
 				WarningLevel="4"
 				SuppressStartupBanner="true"
+				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="0"
 			/>
 			<Tool
@@ -99,7 +99,7 @@
 			/>
 			<Tool
 				Name="VCBscMakeTool"
-				OutputFile=".\spice_viewer.bsc"
+				OutputFile=".\spice_viewer_vs2005.bsc"
 				SuppressStartupBanner="true"
 			/>
 			<Tool
@@ -107,6 +107,9 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -140,10 +143,10 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalOptions="/MP"
 				Optimization="0"
 				AdditionalIncludeDirectories="$(WXWIN)\lib\vc_lib\mswud;$(WXWIN)\include;src;$(BOOST_DIR)"
 				PreprocessorDefinitions="WIN32;_UNICODE;__WXDEBUG__;__WXMSW__;_WINDOWS;_DEBUG"
+				MinimalRebuild="true"
 				ExceptionHandling="1"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -153,6 +156,7 @@
 				ProgramDataBaseFileName=".\NetlistViewer.pdb"
 				WarningLevel="4"
 				SuppressStartupBanner="true"
+				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="3"
 			/>
 			<Tool
@@ -193,7 +197,7 @@
 			/>
 			<Tool
 				Name="VCBscMakeTool"
-				OutputFile=".\spice_viewer.bsc"
+				OutputFile=".\spice_viewer_vs2005.bsc"
 				SuppressStartupBanner="true"
 			/>
 			<Tool
@@ -201,6 +205,9 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -234,7 +241,6 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalOptions="/MP"
 				Optimization="2"
 				AdditionalIncludeDirectories="$(WXWIN)\lib\vc_dll\mswu;$(WXWIN)\include;src;$(BOOST_DIR)"
 				PreprocessorDefinitions="WIN32;WXUSINGDLL;_UNICODE;__WXMSW__;_WINDOWS"
@@ -245,6 +251,7 @@
 				ProgramDataBaseFileName=".\NetlistViewer.pdb"
 				WarningLevel="4"
 				SuppressStartupBanner="true"
+				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="0"
 			/>
 			<Tool
@@ -284,7 +291,7 @@
 			/>
 			<Tool
 				Name="VCBscMakeTool"
-				OutputFile=".\spice_viewer.bsc"
+				OutputFile=".\spice_viewer_vs2005.bsc"
 				SuppressStartupBanner="true"
 			/>
 			<Tool
@@ -292,6 +299,9 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -325,10 +335,10 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalOptions="/MP"
 				Optimization="0"
 				AdditionalIncludeDirectories="$(WXWIN)\lib\vc_dll\mswud;$(WXWIN)\include;src;$(BOOST_DIR)"
 				PreprocessorDefinitions="WIN32;WXUSINGDLL;_UNICODE;__WXDEBUG__;__WXMSW__;_WINDOWS;_DEBUG"
+				MinimalRebuild="true"
 				ExceptionHandling="1"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -338,6 +348,7 @@
 				ProgramDataBaseFileName=".\NetlistViewer.pdb"
 				WarningLevel="4"
 				SuppressStartupBanner="true"
+				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="3"
 			/>
 			<Tool
@@ -378,7 +389,7 @@
 			/>
 			<Tool
 				Name="VCBscMakeTool"
-				OutputFile=".\spice_viewer.bsc"
+				OutputFile=".\spice_viewer_vs2005.bsc"
 				SuppressStartupBanner="true"
 			/>
 			<Tool
@@ -386,6 +397,9 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"

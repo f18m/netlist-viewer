@@ -6,7 +6,7 @@
 
     <!-- List of output formats to generate: -->
     <add-formats>
-        borland,mingw,msvc,watcom,msvs2008prj,gnu
+        borland,mingw,msvc,watcom,msvs2003prj,msvs2005prj,msvs2008prj,gnu
     </add-formats>
 
     <add-flags>-I $(envvar('WXWIN'))/build/bakefiles/wxpresets</add-flags>
@@ -38,13 +38,13 @@
         -o../win/spice_viewer.dsw
     </add-flags>
     <add-flags formats="msvs2003prj">
-        -o../win/spice_viewer.sln
+        -o../win/spice_viewer_vs2003.sln
     </add-flags>
     <add-flags formats="msvs2005prj">
-        -o../win/spice_viewer.sln
+        -o../win/spice_viewer_vs2005.sln
     </add-flags>
     <add-flags formats="msvs2008prj">
-        -o../win/spice_viewer.sln
+        -o../win/spice_viewer_vs2008.sln
     </add-flags>
     
 </bakefile-gen>
