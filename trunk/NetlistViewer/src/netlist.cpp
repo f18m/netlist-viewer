@@ -64,7 +64,7 @@ wxGraphicsPath svSource::s_pathCurrentArrow;
 wxGraphicsPath svSource::s_pathVoltageSigns;
 wxGraphicsPath svCircuit::s_pathGround;
 
-wxPoint svInvalidPoint = wxPoint(-1e10, -1e10);
+wxPoint svInvalidPoint = wxPoint(-1e9, -1e9);
 svNode svGroundNode = svNode("0");      // SPICE conventional name for GND
 
 #define ALLOWED_CHARS       "0123456789.+-"
@@ -102,9 +102,8 @@ struct {
 // svString
 // ----------------------------------------------------------------------------
 
-extern "C" {
-    extern char *eng(double value, int digits, int numeric);
-};
+extern std::string eng(double value, int digits, int numeric);
+
 
 /* static */
 svString svString::formatValue(double v)
@@ -508,7 +507,7 @@ const wxRect& svCircuit::placeDevices(svPlaceAlgorithm ag)
             } point2D;
 
             //typedef typename boost::graph_traits<Graph>::vertex_descriptor Vertex;
-//            boost::property_map<svUGraph, point2D> map;// = g§et(boost::vertex_index, graph);
+//            boost::property_map<svUGraph, point2D> map;// = gï¿½et(boost::vertex_index, graph);
         //    boost::property_map<svUGraph, vertex_id_t>::type vertex_id_map; 
 //            circle_graph_layout(graph, map, 20.0);
         }

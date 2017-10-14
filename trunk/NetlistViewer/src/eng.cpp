@@ -1,7 +1,7 @@
 /* Print a floating-point number in engineering notation */
 /* Documentation: http://www.cs.tut.fi/~jkorpela/c/eng.html */
 
-#define MICRO "µ"
+#define MICRO "ï¿½"
 
 #define PREFIX_START (-24)
 /* Smallest power of ten for which there is a prefix defined.
@@ -10,18 +10,20 @@
 
 #include <stdio.h>
 #include <math.h>
+#include <string>
 
 #define PREFIX_END      (PREFIX_START+(int)((sizeof(prefix)/sizeof(char *)-1)*3))
 
-char *eng(double value, int digits, int numeric)
+std::string eng(double value, int digits, int numeric)
 {
-    static char *prefix[] = {
+    static const char *prefix[] = {
       "y", "z", "a", "f", "p", "n", MICRO, "m", "",
       "k", "M", "G", "T", "P", "E", "Z", "Y"
     }; 
 
     int expof10;
-    static char result[100];
+
+    char result[100];
     char *res = result;
 
     if (value < 0.)
