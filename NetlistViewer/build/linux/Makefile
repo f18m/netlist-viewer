@@ -42,14 +42,17 @@ SPICE_VIEWER_LDDFLAGS = $(LDFLAGS) $(BOOST_LDFLAGS) `$(WX_CONFIG) $(WX_CONFIG_FL
 SPICE_VIEWER_OBJECTS =  \
 	$(COMPILER_PREFIX)/spice_viewer_app.o \
 	$(COMPILER_PREFIX)/spice_viewer_eng.o \
-	$(COMPILER_PREFIX)/spice_viewer_netlist.o
+	$(COMPILER_PREFIX)/spice_viewer_netlist.o \
+	$(COMPILER_PREFIX)/spice_viewer_devices.o
 
+INSTALL_DIR=`$(WX_CONFIG) --prefix`/bin
 
 ### Targets: ###
 
 all: test_for_selected_wxbuild $(COMPILER_PREFIX) ./NetlistViewer
 
 install: 
+	cp ./NetlistViewer $(INSTALL_DIR)
 
 uninstall: 
 
@@ -59,7 +62,7 @@ clean:
 	rm -f ./NetlistViewer
 
 test_for_selected_wxbuild:
-	@wx-config --list || ( echo "No wx-config utility found on the path. Do you have wxWidgets installed?" ; exit 1 )
+	@wx-config --list >/dev/null || ( echo "No wx-config utility found on the path. Do you have wxWidgets installed?" ; exit 1 )
 
 $(COMPILER_PREFIX):
 	@mkdir -p $(COMPILER_PREFIX)
@@ -76,6 +79,9 @@ $(COMPILER_PREFIX)/spice_viewer_eng.o: ../../src/eng.cpp
 $(COMPILER_PREFIX)/spice_viewer_netlist.o: ../../src/netlist.cpp
 	$(CXX) -c -o $@ $(SPICE_VIEWER_CXXFLAGS) $(CPPDEPS) $<
 
+$(COMPILER_PREFIX)/spice_viewer_devices.o: ../../src/devices.cpp
+	$(CXX) -c -o $@ $(SPICE_VIEWER_CXXFLAGS) $(CPPDEPS) $<
+	
 .PHONY: all install uninstall clean
 
 
