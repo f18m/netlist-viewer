@@ -29,7 +29,7 @@
 
   ; NOTE: the version should be the same as the one in svn_revision.sh (see the UPP_VERSION #define)
   !define PRODUCT_NAME            "NetlistViewer"
-  !define PRODUCT_VERSION         "0.1"
+  !define PRODUCT_VERSION         "0.2"
   !define PRODUCT_PUBLISHER       "Francesco Montorsi"
   !define INSTALLER_MODE          "release"     ; choose between "debug" and "release"
   !define SVN_TEST_INSTALLER      0           ; is this a SVN test?
@@ -95,7 +95,6 @@ Section "install" ; No components page, name is not important
   File gnugpl.txt
   File ..\src\icon.ico
   File ..\build\win\NetlistViewer.exe
-  File ..\build\win\NetlistViewer.exe.manifest
   File ${INSTALLER_MODE}\*.dll
   File ${INSTALLER_MODE}\*.manifest
     ; CRT manifests always need to be copied to allow installations on WinXP systems
