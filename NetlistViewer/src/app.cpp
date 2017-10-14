@@ -42,7 +42,7 @@
 // constants
 // ----------------------------------------------------------------------------
 
-#define SV_VERSION_STR         "0.1"
+#define SV_VERSION_STR         "0.2"
 
 // IDs for the controls and the menu commands
 enum
