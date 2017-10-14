@@ -128,6 +128,9 @@
       <OutputFile>.\netlist_viewer_vs2017.bsc</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
     </Bscmake>
+    <Manifest>
+      <OutputManifestFile>.\NetlistViewer.exe.manifest</OutputManifestFile>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Static Debug|Win32'">
     <Midl>
