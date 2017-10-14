@@ -420,8 +420,8 @@ void SpiceViewerFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
     aboutInfo.SetName("Netlist Viewer");
     aboutInfo.SetVersion(SV_VERSION_STR);
     aboutInfo.SetDescription("SPICE netlist viewer. This program converts a SPICE text netlist to a graphical schematic.");
-    aboutInfo.SetCopyright("(C) 2010");
-    aboutInfo.SetWebSite("https://sourceforge.net/projects/netlistviewer");
+    aboutInfo.SetCopyright("(C) 2010-2017");
+    aboutInfo.SetWebSite("https://sourceforge.net/p/netlistviewer/wiki/Home/");
     aboutInfo.AddDeveloper("Francesco Montorsi <frm@users.sourceforge.net>");
 
     wxAboutBox(aboutInfo);
