@@ -182,7 +182,7 @@ bool SpiceViewerApp::OnInit()
 #define SELF_TESTS 1
 #if SELF_TESTS
     struct {
-        svString testString;
+        const char* testString;
         double value;
     } test[] = 
     {
@@ -200,7 +200,10 @@ bool SpiceViewerApp::OnInit()
     for (size_t i=0; i<WXSIZEOF(test); i++)
     {
         double temp;
-        wxASSERT(test[i].testString.getValue(&temp));
+
+        svString teststr(test[i].testString);
+
+        wxASSERT(teststr.getValue(&temp));
         wxASSERT(fabs(temp - test[i].value) < EPSILON);
     }
 #endif

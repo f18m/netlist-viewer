@@ -23,6 +23,7 @@
 
 #include <wx/graphics.h>
 
+#include <boost/functional/hash.hpp>
 #include <boost/graph/adjacency_matrix.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
@@ -139,6 +140,7 @@ class svString : public wxString
 public:
     svString() {}
     svString(const wxString& str) : wxString(str) {}
+    svString(const char* str) : wxString(str) {}
 
     //! Returns true if this string starts with a character contained in the
     //! given string @a str. If it does, returns how many characters at the
@@ -212,6 +214,8 @@ public:
         {
             m_rotation = SVR_0;
         }
+
+    virtual ~svBaseDevice() {}
 
 public:     // misc functions
 
@@ -680,7 +684,7 @@ public:
     wxPoint getRelativeGridNodePosition(unsigned int nodeIdx) const
     {
         // default orientation: vertical
-        wxASSERT(nodeIdx >= 0 && nodeIdx <= 1);
+        wxASSERT(nodeIdx <= 1);
         if (nodeIdx == 0) return wxPoint(0,0);
         if (nodeIdx == 1)
         {
@@ -1029,7 +1033,7 @@ public:
         // node 2 == source/emitter
 
         // default orientation: vertical
-        wxASSERT(nodeIdx >= 0 && nodeIdx <= 2);
+        wxASSERT(nodeIdx <= 2);
         if (nodeIdx == 0) 
             return wxPoint(0,0);
         if (nodeIdx == 1)
