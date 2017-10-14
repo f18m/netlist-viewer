@@ -30,6 +30,7 @@
 #include <boost/graph/circle_layout.hpp>
 
 #include "netlist.h"
+#include "devices.h"
 
 
 /*
@@ -45,24 +46,6 @@
 // ----------------------------------------------------------------------------
 // globals
 // ----------------------------------------------------------------------------
- 
-svBaseDeviceArray svDeviceFactory::s_registered;
-wxGraphicsPath svExternalPin::s_path;
-wxGraphicsPath svCapacitor::s_path;
-wxGraphicsPath svResistor::s_path;
-wxGraphicsPath svInductor::s_path;
-wxGraphicsPath svDiode::s_path;
-wxGraphicsPath svMOS::s_path;
-wxGraphicsPath svMOS::s_pathArrow;
-wxGraphicsPath svBJT::s_path;
-wxGraphicsPath svBJT::s_pathArrow;
-wxGraphicsPath svJFET::s_path;
-wxGraphicsPath svJFET::s_pathArrow;
-wxGraphicsPath svSource::s_pathIndipendent;
-wxGraphicsPath svSource::s_pathDipendent;
-wxGraphicsPath svSource::s_pathCurrentArrow;
-wxGraphicsPath svSource::s_pathVoltageSigns;
-wxGraphicsPath svCircuit::s_pathGround;
 
 wxPoint svInvalidPoint = wxPoint(-1e9, -1e9);
 svNode svGroundNode = svNode("0");      // SPICE conventional name for GND
@@ -636,7 +619,7 @@ void svCircuit::draw(wxGraphicsContext* gc, unsigned int gridSize, int selectedD
     }
 
     // draw an "airwire" for each device node
-    const wxPen* wirePens[] = 
+    const wxPen* origWirePens[] =
     {
         wxBLUE_PEN,
         wxCYAN_PEN,
@@ -648,6 +631,13 @@ void svCircuit::draw(wxGraphicsContext* gc, unsigned int gridSize, int selectedD
         wxRED_PEN
     };
 
+    std::vector<wxPen> wirePens;
+    for (unsigned int i=0; i < WXSIZEOF(origWirePens); i++)
+    {
+        wirePens.push_back(wxPen(*origWirePens[i]));
+        wirePens.back().SetWidth(3);            // default wx pens are VERY THIN!!!
+    }
+
     // reset transformation matrix:
     gc->SetTransform(gc->CreateMatrix());
 
@@ -656,9 +646,8 @@ void svCircuit::draw(wxGraphicsContext* gc, unsigned int gridSize, int selectedD
     {
         if (*i != svGroundNode)
         {
-            gc->SetPen(*wirePens[idx++]);
-            if (idx == WXSIZEOF(wirePens))
-                idx = 0;
+            unsigned int penIdx = (idx++) % wirePens.size();
+            gc->SetPen(wirePens[penIdx]);
 
             // TO-OPTIMIZE: we may scan the device list and then each device's node and 
             //              put the device's node relative position in an array indexed by
@@ -688,3 +677,46 @@ void svCircuit::draw(wxGraphicsContext* gc, unsigned int gridSize, int selectedD
     }
 }
 
+std::vector<wxPoint> svCircuit::getDeviceNodesConnectedTo(const svNode& node) const
+{
+    std::vector<wxPoint> ret;
+    for (size_t i = 0; i < m_devices.size(); i++)
+    {
+        wxPoint pt = m_devices[i]->getRelativeGridNodePosition(node);
+        if (pt != svInvalidPoint)
+            ret.push_back(m_devices[i]->getGridPosition() + pt);
+    }
+    return ret;
+}
+
+void svCircuit::assign(const svCircuit& tocopy)
+{
+    release();
+    m_name = tocopy.m_name;
+    m_nodes = tocopy.m_nodes;
+    m_bb = tocopy.m_bb;
+    for (size_t i = 0; i < tocopy.m_devices.size(); i++)
+        m_devices.push_back(tocopy.m_devices[i]->clone());
+}
+
+void svCircuit::release()
+{
+    for (size_t i = 0; i < m_devices.size(); i++)
+        delete m_devices[i];
+    m_devices.clear();
+    m_name.clear();
+    m_nodes.clear();
+    m_bb = wxRect(0, 0, 0, 0);
+}
+
+int svCircuit::hitTest(const wxPoint& gridPt, unsigned int gridSize, unsigned int tolerance) const
+        {
+    for (size_t i = 0; i < m_devices.size(); i++)
+    {
+        wxRect r = m_devices[i]->getRealBoundingBox(gridSize);
+        r.Inflate(tolerance, tolerance);
+        if (r.x < gridPt.x && r.y < gridPt.y && r.x + r.width >= gridPt.x && r.y + r.height >= gridPt.y)
+            return i;
+    }
+    return wxNOT_FOUND;
+}

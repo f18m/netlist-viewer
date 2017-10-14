@@ -35,6 +35,7 @@
 #include <wx/filename.h>
 
 #include "netlist.h"
+#include "devices.h"
 #include <fstream>
 
 // ----------------------------------------------------------------------------
@@ -62,6 +63,7 @@ enum
 
 #include "icon.xpm"
 #include "icon_small.xpm"
+
 
 // ----------------------------------------------------------------------------
 // private classes
@@ -408,7 +410,7 @@ void SpiceViewerFrame::OnQuit(wxCommandEvent& WXUNUSED(event))
 
 void SpiceViewerFrame::OnHelp(wxCommandEvent& WXUNUSED(event))
 {
-#define HELP_PAGE       "https://sourceforge.net/apps/trac/netlistviewer/wiki/HelpPage"
+#define HELP_PAGE       "https://sourceforge.net/p/netlistviewer/tickets/"
 
     if (!wxLaunchDefaultBrowser(HELP_PAGE))
         wxLogError("Could not open the URL '%s'... please open it manually.", HELP_PAGE);
