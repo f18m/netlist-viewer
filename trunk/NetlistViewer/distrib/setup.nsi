@@ -38,9 +38,9 @@
   ; Name and file
   Name "${PRODUCT_NAME} ${PRODUCT_VERSION} Installer"
   !if ${SVN_TEST_INSTALLER}
-    OutFile "${PRODUCT_NAME}-r${SVN_REVISION}-${INSTALLER_MODE}.exe"
+    OutFile "${PRODUCT_NAME}-r${SVN_REVISION}-${INSTALLER_MODE}-win-installer.exe"
   !else
-    OutFile "${PRODUCT_NAME}-${PRODUCT_VERSION}.exe"
+    OutFile "${PRODUCT_NAME}-${PRODUCT_VERSION}-win-installer.exe"
   !endif
   Icon "..\src\icon.ico"
 
@@ -96,8 +96,6 @@ Section "install" ; No components page, name is not important
   File ..\src\icon.ico
   File ..\build\win\NetlistViewer.exe
   File ${INSTALLER_MODE}\*.dll
-  File ${INSTALLER_MODE}\*.manifest
-    ; CRT manifests always need to be copied to allow installations on WinXP systems
 
   SetOutPath "$INSTDIR\examples"
   File /nonfatal ..\examples\*.ckt
