@@ -1,0 +1,21 @@
+name: main CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    # install deps
+    - uses: actions/checkout@v2
+    - name: install debian-packaged dependencies
+      run: sudo apt install -y libwxgtk3.0-gtk3-dev boost-devel
+
+    # build
+    - name: build netlist-viewer 
+      run: cd NetlistViewer/build/linux && make
