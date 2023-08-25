@@ -17,7 +17,9 @@ CXX = `$(WX_CONFIG) --cxx`
 
 # Standard flags for C++
 # you can override this to enable e.g. debug mode: -O0 -g
-CXXFLAGS ?= -O2
+# about -Wno-ignored-qualifiers -Wno-cast-function-type: they are used to silence warnings
+# reported in wxWidgets headers themselves
+CXXFLAGS ?= -O2 -Wno-ignored-qualifiers -Wno-cast-function-type
 
 
 # -------------------------------------------------------------------------
