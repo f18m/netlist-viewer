@@ -13,6 +13,12 @@ The graphical representations helps to understand the electrical/electronic circ
 Past versions were hosted in Sourceforge, see https://sourceforge.net/projects/netlistviewer/.
 All new developments have been moved into this Github project.
 
+
+# How to build from sources
+
+NetListViewer is a pretty simple application with 2 main dependencies: [wxWidgets](https://www.wxwidgets.org/) and [Boost](https://www.boost.org/)-
+Some simple notes on how to build NetListViewer for [Windows](build/win/README.md) and for [Linux](build/linux/README.md) are available.
+
 # Status
 
 The software is usable even if it could be improved very much.

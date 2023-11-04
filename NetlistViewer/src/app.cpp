@@ -3,7 +3,6 @@
 // Purpose:     Spice Viewer application entry point
 // Author:      Francesco Montorsi
 // Created:     28/05/2010
-// RCS-ID:      $Id$
 // Copyright:   (c) Francesco Montorsi
 // Licence:     GPL license
 /////////////////////////////////////////////////////////////////////////////
@@ -419,9 +418,9 @@ void SpiceViewerFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
     aboutInfo.SetName("Netlist Viewer");
     aboutInfo.SetVersion(SV_VERSION_STR);
     aboutInfo.SetDescription("SPICE netlist viewer. This program converts a SPICE text netlist to a graphical schematic.");
-    aboutInfo.SetCopyright("(C) 2010-2017");
-    aboutInfo.SetWebSite("https://sourceforge.net/p/netlistviewer/wiki/Home/");
-    aboutInfo.AddDeveloper("Francesco Montorsi <frm@users.sourceforge.net>");
+    aboutInfo.SetCopyright("(C) 2010-2023");
+    aboutInfo.SetWebSite("https://github.com/f18m/netlist-viewer");
+    aboutInfo.AddDeveloper("Francesco Montorsi <francesco.montorsi@gmail.com>");
 
     wxAboutBox(aboutInfo);
 }
