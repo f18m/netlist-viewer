@@ -38,7 +38,7 @@
 // constants
 // ----------------------------------------------------------------------------
 
-#define SV_VERSION_STR         "0.2"
+#define SW_VERSION_STR         "0.3"
 
 // IDs for the controls and the menu commands
 enum
@@ -276,7 +276,7 @@ SpiceViewerFrame::SpiceViewerFrame(const wxString& title)
 
     // create a status bar just for fun (by default with 1 pane only)
     CreateStatusBar(1);
-    SetStatusText("Welcome to Netlist Viewer " SV_VERSION_STR "!");
+    SetStatusText("Welcome to Netlist Viewer " SW_VERSION_STR "!");
 
     // create the main canvas of this application
     // (it will get automatically linked to this frame and its size will be
@@ -416,7 +416,7 @@ void SpiceViewerFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
 {
     wxAboutDialogInfo aboutInfo;
     aboutInfo.SetName("Netlist Viewer");
-    aboutInfo.SetVersion(SV_VERSION_STR);
+    aboutInfo.SetVersion(SW_VERSION_STR);
     aboutInfo.SetDescription("SPICE netlist viewer. This program converts a SPICE text netlist to a graphical schematic.");
     aboutInfo.SetCopyright("(C) 2010-2023");
     aboutInfo.SetWebSite("https://github.com/f18m/netlist-viewer");
