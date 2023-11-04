@@ -23,7 +23,7 @@ std::string eng(double value, int digits, int numeric)
 
     int expof10;
 
-    char result[100];
+    char result[100] = { 0 };
     char *res = result;
 
     if (value < 0.)
