@@ -17,17 +17,25 @@ jobs:
       run: sudo apt install -y libwxgtk3.0-gtk3-dev libboost-graph1.74.0 libboost-serialization1.74.0 libboost-all-dev
 
     # build
-    - name: build netlist-viewer 
+    - name: build netlist-viewer
       run: cd NetlistViewer/build/linux && make
 
   WindowsBuild:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
+      
+      # install deps
       - name: vcpkg build
         uses: johnwason/vcpkg-action@v5
         id: vcpkg
         with:
-          pkgs: boost-date-time boost-system
+          pkgs: boost wxwidgets
           triplet: x64-windows-release
           token: ${{ github.token }}
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v1.1
+        
+      # build
+      - name: build netlist-viewer
+        run: msbuild NetlistViewer\build\win\netlist_viewer_vs2022.vcxproj -t:rebuild -verbosity:diag -property:Configuration=Release
