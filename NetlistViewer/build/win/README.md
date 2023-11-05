@@ -1,16 +1,26 @@
 # Building NetListViewer on Windows
 
-Please download and compile with latest VisualStudio both 
+NetListViewer uses [vcpkg](https://vcpkg.io/en/getting-started) to install its 2 dependencies:
 1. wxWidgets >= 3.0.0
 1. Boost >= 1.58
 
-Then define the following 2 environment variables:
-1. WXWIN        to point to the base root of your wxWidgets directory
-1. BOOST_DIR    to point to the base root of your Boost directory
- 
-For more info on how to do it, please look on Google, e.g.: https://superuser.com/questions/949560/how-do-i-set-system-environment-variables-in-windows-10
+Step by step procedure to get them installed:
 
-Finally open the netlist_viewer_vs2022.sln project with VisualStudio and you should be able to build it.
+1. Install vcpkg following the [vcpkg getting started](https://vcpkg.io/en/getting-started)
+1. From a console window run:
+
+```
+   cd <your-vcpkg-repo-dir>
+   vcpkg install wxwidgets boost
+   vcpkg integrate install
+```
+
+Note that this step will take a while: it will rebuild all wxWidgets and Boost libraries and all their
+dependencies as well.
+
+1. Open the netlist_viewer_vs2022.sln project with VisualStudio 2022 or newer and you should be able to build it.
 
 
 
+NOTE: as of Nov 2023, the installation throug vcpkg of the "expat" library (one of wxWidgets dependencies)
+fails due to https://github.com/libexpat/libexpat/issues/418. Check that URL for the workaround (i.e. installing the English pack in VisualStudio)

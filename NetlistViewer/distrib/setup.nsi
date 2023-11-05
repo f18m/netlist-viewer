@@ -86,13 +86,8 @@ Section "install" ; No components page, name is not important
   SetOutPath "$INSTDIR"
   File gnugpl.txt
   File ..\src\icon.ico
-  File ..\build\win\NetlistViewer.exe
-  
-  !echo "FMON test $%WXWIN%"
-  
-  File "$%WXWIN%\lib\vc14x_x64_dll\*.dll"
-  ;;;File ${INSTALLER_MODE}\*.dll
-  
+  File ..\build\win\x64\Release\netlist_viewer.exe
+  File ..\build\win\x64\Release\*.dll  
 
   SetOutPath "$INSTDIR\examples"
   File /nonfatal ..\examples\*.ckt
@@ -126,7 +121,7 @@ Section "install" ; No components page, name is not important
   SetShellVarContext all        ; see http://nsis.sourceforge.net/Shortcuts_removal_fails_on_Windows_Vista
   SetOutPath "$INSTDIR"         ; this will be the working directory for the shortcuts created below
   CreateDirectory "$SMPROGRAMS\${PRODUCT_NAME}"
-  CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\NetlistViewer.lnk" "$INSTDIR\netlistviewer.exe"
+  CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\NetlistViewer.lnk" "$INSTDIR\netlist_viewer.exe"
   CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Uninstall.lnk" "$INSTDIR\uninstall.exe"
   
 SectionEnd
@@ -149,7 +144,7 @@ Section "un.install"
   Delete "$INSTDIR\uninstall.exe"
   Delete "$INSTDIR\gnugpl.txt"
   Delete "$INSTDIR\icon.ico"
-  Delete "$INSTDIR\netlistviewer.exe"
+  Delete "$INSTDIR\netlist_viewer.exe"
   Delete "$INSTDIR\*.dll"
   Delete "$INSTDIR\*.manifest"
   Delete "$INSTDIR\examples\*.ckt"
@@ -162,5 +157,5 @@ SectionEnd
 
 Function .oninstsuccess   
   ; launch the application at the end of the install
-  Exec "$INSTDIR\NetlistViewer.exe"   
+  Exec "$INSTDIR\netlist_viewer.exe"   
 FunctionEnd

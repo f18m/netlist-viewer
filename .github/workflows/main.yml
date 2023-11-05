@@ -7,7 +7,7 @@ on:
     branches: [ master ]
 
 jobs:
-  build:
+  LinuxBuild:
     runs-on: ubuntu-latest
 
     steps:
@@ -19,3 +19,15 @@ jobs:
     # build
     - name: build netlist-viewer 
       run: cd NetlistViewer/build/linux && make
+
+   WindowsBuild:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: vcpkg build
+        uses: johnwason/vcpkg-action@v5
+        id: vcpkg
+        with:
+          pkgs: boost-date-time boost-system
+          triplet: x64-windows-release
+          token: ${{ github.token }}
