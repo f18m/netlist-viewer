@@ -4,6 +4,7 @@ on:
   push:
     branches: [ master ]
   pull_request:
+    branches: [ master ]
 
 jobs:
   LinuxBuild:
@@ -19,7 +20,7 @@ jobs:
     - name: build netlist-viewer 
       run: cd NetlistViewer/build/linux && make
 
-   WindowsBuild:
+  WindowsBuild:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
