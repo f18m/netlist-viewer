@@ -12,7 +12,7 @@ jobs:
 
     steps:
     # install deps
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: install debian-packaged dependencies
       run: sudo apt install -y libwxgtk3.0-gtk3-dev libboost-graph1.74.0 libboost-serialization1.74.0 libboost-all-dev
 
@@ -27,11 +27,10 @@ jobs:
       - name: Add msbuild to PATH
         uses: microsoft/setup-msbuild@v1.1
       
-      # install deps
-      # Setup vcpkg: ensures vcpkg is downloaded and built.
-      # Since vcpkg.json is being used later on to install the packages
-      # when `run-cmake` runs, no packages are installed at this time
-      # (and vcpkg does not run).
+      # setup vcpkg & msbuild tools
+      # NOTE: no packages/dependencies are installed at this time -- msbuild will use vcpkg to download&build dependencies
+      #       specified in the vcpkg.json during the build step below. This happens because the VisualStudio solution has
+      #       the 'VcpkgEnableManifest' property set to True
       - name: Setup anew (or from cache) vcpkg (and does not build any package)
         uses: lukka/run-vcpkg@v11
         with:
@@ -39,8 +38,6 @@ jobs:
       - name: Integrate vcpkg
         run: vcpkg integrate install
 
-
-        
       # build
       - name: build netlist-viewer
         run: msbuild NetlistViewer\build\win\netlist_viewer_vs2022.vcxproj -t:rebuild -property:Configuration=Release -property:Platform=x64
