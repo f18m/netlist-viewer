@@ -24,17 +24,20 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      
-      # install deps
-      - name: vcpkg build
-        uses: johnwason/vcpkg-action@v5
-        id: vcpkg
-        with:
-          manifest-dir: ${{ github.workspace }} # Set to directory containing vcpkg.json
-          triplet: x64-windows-release
-          token: ${{ github.token }}
       - name: Add msbuild to PATH
         uses: microsoft/setup-msbuild@v1.1
+      
+      # install deps
+      # Setup vcpkg: ensures vcpkg is downloaded and built.
+      # Since vcpkg.json is being used later on to install the packages
+      # when `run-cmake` runs, no packages are installed at this time
+      # (and vcpkg does not run).
+      - name: Setup anew (or from cache) vcpkg (and does not build any package)
+        uses: lukka/run-vcpkg@v11
+      - name: Integrate vcpkg
+        run: vcpkg integrate install
+
+
         
       # build
       - name: build netlist-viewer
