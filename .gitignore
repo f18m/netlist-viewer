@@ -3,6 +3,5 @@ NetlistViewer/build/linux/NetlistViewer
 NetlistViewer/build/win/x64
 NetlistViewer/build/win/.vs
 NetlistViewer/build/win/*.pdb
-NetlistViewer/build/win/*.exe
 NetlistViewer/distrib/*.exe
-
+vcpkg_installed/

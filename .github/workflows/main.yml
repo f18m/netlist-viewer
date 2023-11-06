@@ -7,15 +7,37 @@ on:
     branches: [ master ]
 
 jobs:
-  build:
+  LinuxBuild:
     runs-on: ubuntu-latest
 
     steps:
     # install deps
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: install debian-packaged dependencies
       run: sudo apt install -y libwxgtk3.0-gtk3-dev libboost-graph1.74.0 libboost-serialization1.74.0 libboost-all-dev
 
     # build
-    - name: build netlist-viewer 
+    - name: build netlist-viewer
       run: cd NetlistViewer/build/linux && make
+
+  WindowsBuild:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v1.1
+      
+      # setup vcpkg & msbuild tools
+      # NOTE: no packages/dependencies are installed at this time -- msbuild will use vcpkg to download&build dependencies
+      #       specified in the vcpkg.json during the build step below. This happens because the VisualStudio solution has
+      #       the 'VcpkgEnableManifest' property set to True
+      - name: Setup anew (or from cache) vcpkg (and does not build any package)
+        uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgGitCommitId: 8eb57355a4ffb410a2e94c07b4dca2dffbee8e50
+      - name: Integrate vcpkg
+        run: vcpkg integrate install
+
+      # build
+      - name: build netlist-viewer
+        run: msbuild NetlistViewer\build\win\netlist_viewer_vs2022.vcxproj -t:rebuild -property:Configuration=Release -property:Platform=x64
