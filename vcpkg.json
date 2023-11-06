@@ -1,0 +1,12 @@
+{
+  "dependencies": [
+    {
+        "name": "wxwidgets",
+        "version>=": "3.2.3"
+    },
+    {
+        "name": "boost",
+        "version>=": "1.82.0"
+    }
+  ]
+}

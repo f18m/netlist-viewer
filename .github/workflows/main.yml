@@ -30,7 +30,7 @@ jobs:
         uses: johnwason/vcpkg-action@v5
         id: vcpkg
         with:
-          pkgs: boost wxwidgets
+          manifest-dir: ${{ github.workspace }} # Set to directory containing vcpkg.json
           triplet: x64-windows-release
           token: ${{ github.token }}
       - name: Add msbuild to PATH
@@ -38,4 +38,4 @@ jobs:
         
       # build
       - name: build netlist-viewer
-        run: msbuild NetlistViewer\build\win\netlist_viewer_vs2022.vcxproj -t:rebuild -verbosity:diag -property:Configuration=Release
+        run: msbuild NetlistViewer\build\win\netlist_viewer_vs2022.vcxproj -t:rebuild -verbosity:diag -property:Configuration=Release -property:Platform=x64
