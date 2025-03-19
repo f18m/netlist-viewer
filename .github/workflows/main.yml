@@ -21,6 +21,13 @@ jobs:
     - name: build netlist-viewer
       run: cd NetlistViewer/build/linux && make
 
+    # save binary
+    - name: Save
+      uses: actions/upload-artifact@v4
+      with:
+        name: NetlistViewer, Linux X86-64
+        path: NetlistViewer/build/linux/NetlistViewer
+
   WindowsBuild:
     runs-on: windows-latest
     steps:
