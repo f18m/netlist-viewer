@@ -15,7 +15,7 @@ jobs:
     # install deps
     - uses: actions/checkout@v4
     - name: install debian-packaged dependencies
-      run: sudo apt install -y libwxgtk3.0-gtk3-dev libboost-graph1.74.0 libboost-serialization1.74.0 libboost-all-dev
+      run: sudo apt install -y libwxgtk3.2-dev libboost-graph1.83.0 libboost-serialization1.83.0 libboost-all-dev
 
     # build
     - name: build netlist-viewer
