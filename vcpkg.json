@@ -2,19 +2,19 @@
   "dependencies": [
     {
         "name": "wxwidgets",
-        "version>=": "3.2.3"
+        "version>=": "3.2.6"
     },
     {
         "name": "boost-graph",
-        "version>=": "1.82.0"
+        "version>=": "1.87.0"
     },
     {
         "name": "boost-serialization",
-        "version>=": "1.82.0"
+        "version>=": "1.87.0"
     },
     {
         "name": "boost-functional",
-        "version>=": "1.82.0"
+        "version>=": "1.87.0"
     }
   ]
 }
