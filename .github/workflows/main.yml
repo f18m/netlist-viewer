@@ -33,16 +33,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Add msbuild to PATH
-        uses: microsoft/setup-msbuild@v1.1
+        uses: microsoft/setup-msbuild@v2
       
       # setup vcpkg & msbuild tools
       # NOTE: no packages/dependencies are installed at this time -- msbuild will use vcpkg to download&build dependencies
       #       specified in the vcpkg.json during the build step below. This happens because the VisualStudio solution has
       #       the 'VcpkgEnableManifest' property set to True
       - name: Setup anew (or from cache) vcpkg (and does not build any package)
-        uses: lukka/run-vcpkg@v11
-        with:
-          vcpkgGitCommitId: 8eb57355a4ffb410a2e94c07b4dca2dffbee8e50
+        uses: lukka/run-vcpkg@v11.5
+        #with:
+        #  vcpkgGitCommitId: 8eb57355a4ffb410a2e94c07b4dca2dffbee8e50
       - name: Integrate vcpkg
         run: vcpkg integrate install
 
