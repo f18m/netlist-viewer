@@ -1,12 +1,37 @@
-# netlist-viewer
+# Netlist Viewer
 
 Netlist Viewer is a tool capable of loading SPICE netlists and convert them in a schematic (i.e. graphical) format.
 The graphical representations helps to understand the electrical/electronic circuit represented by the SPICE netlist, and save some tedious work.
+
+# What is a netlist?
+
+A [circuit diagram](https://en.wikipedia.org/wiki/Circuit_diagram) can be represented in a very compact form using a [netlist](https://en.wikipedia.org/wiki/Netlist). Wikipedia's definition of the netlist is "a list of the electronic components in a circuit and a list of the nodes they are connected to".
+An example of how a netlist actually looks like is:
+
+```
+.SUBCKT test_misc1 IN OUT
+
+V1 0 IN DC=4V
+R1 IN 2 
+Q1 3 2 0 NPNstd
+M1 OUT 3 0 NMOSstd
+D1 OUT 0 DIODEstd
+
+.ENDS
+```
 
 # Screenshots
 
 ![1](https://github.com/f18m/netlist-viewer/assets/9748595/ff8c1017-f92b-4f33-b399-36a6affe25de)
 ![2](https://github.com/f18m/netlist-viewer/assets/9748595/9a7054e3-cc1b-469b-82e9-95874dc7773a)
+
+# Binaries
+
+You can download binaries from [Github releases](https://github.com/f18m/netlist-viewer/releases).
+These binaries are not garantueed to work on your system. 
+A better way to distribute applications for Linux would be using [Flatpak](https://github.com/f18m/netlist-viewer/issues/6).
+A better way to distribute applications for Windows would be providing an installer.
+If you are interested in such work, please open an issue/PR.
 
 # Past versions of Netlist-viewer
 
