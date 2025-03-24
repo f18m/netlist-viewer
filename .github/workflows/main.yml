@@ -31,6 +31,7 @@ jobs:
         with:
           name: NetlistViewer, Linux x86_64
           path: NetlistViewer/build/linux/NetlistViewer
+          if-no-files-found: error
 
   WindowsBuild:
     runs-on: windows-latest
@@ -65,6 +66,7 @@ jobs:
         with:
           name: NetlistViewer, Windows x86_64
           path: NetlistViewer/build/win/x64/Release/
+          if-no-files-found: error
 
       # snippet of actions taken from https://github.com/NSIS-Dev/ci-examples/blob/main/.github/workflows/windows-latest.yml
       - name: Install NSIS
@@ -90,3 +92,4 @@ jobs:
         with:
           name: NetlistViewer, Windows Installer
           path: NetlistViewer/distrib/NetlistViewer-*-win-installer.exe
+          if-no-files-found: error
