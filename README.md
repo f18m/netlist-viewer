@@ -30,7 +30,6 @@ D1 OUT 0 DIODEstd
 You can download binaries from [Github releases](https://github.com/f18m/netlist-viewer/releases).
 These binaries are not garantueed to work on your system. 
 A better way to distribute applications for Linux would be using [Flatpak](https://github.com/f18m/netlist-viewer/issues/6).
-A better way to distribute applications for Windows would be providing an installer.
 If you are interested in such work, please open an issue/PR.
 
 # Past versions of Netlist-viewer
