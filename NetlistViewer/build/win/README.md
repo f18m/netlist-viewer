@@ -30,6 +30,7 @@ NOTE: as of Nov 2023, the installation through vcpkg of the "expat" library (one
 fail due to https://github.com/libexpat/libexpat/issues/418 if you have a localized version of VisualStudio.
 Check that URL for the workaround (i.e. installing the English pack in VisualStudio)
 
+NOTE: these steps are also part of the CI pipeline of the Github project.
 
 ## Update the build system
 
