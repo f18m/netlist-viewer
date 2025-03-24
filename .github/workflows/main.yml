@@ -41,11 +41,16 @@ jobs:
       #       the 'VcpkgEnableManifest' property set to True
       - name: Setup anew (or from cache) vcpkg (and does not build any package)
         uses: lukka/run-vcpkg@v11.5
-        #with:
-        #  vcpkgGitCommitId: 8eb57355a4ffb410a2e94c07b4dca2dffbee8e50
+        with:
+          # as suggested, we pin the version of "vcpkg" to a specific hash (23rd March 2025) to ensure reproducible builds
+          vcpkgGitCommitId: a76b33254af4092ff45f08ec5adcd9fd06468b43
       - name: Integrate vcpkg
         run: vcpkg integrate install
 
+      # this is going to be veeeeeeeeeeery long
+      - name: Build dependencies
+        run: vcpkg install
+
       # build
-      - name: build netlist-viewer
+      - name: Build netlist-viewer
         run: msbuild NetlistViewer\build\win\netlist_viewer_vs2022.vcxproj -t:rebuild -property:Configuration=Release -property:Platform=x64

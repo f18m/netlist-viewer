@@ -16,7 +16,7 @@ Step by step procedure to get them installed:
 ```
 
 Note that this step will take a while: it will rebuild all wxWidgets and Boost libraries and all their
-dependencies as well.
+dependencies as well. You can monitor the build of each dependency by watching/grepping the "completed submission of" messages of `vcpkg`.
 
 1. Open the netlist_viewer_vs2022.sln project with VisualStudio 2022 or newer and you should be able to build it. 
 Alternatively the build can be launched from a console window as well:
@@ -29,3 +29,13 @@ Alternatively the build can be launched from a console window as well:
 NOTE: as of Nov 2023, the installation through vcpkg of the "expat" library (one of wxWidgets dependencies) can
 fail due to https://github.com/libexpat/libexpat/issues/418 if you have a localized version of VisualStudio.
 Check that URL for the workaround (i.e. installing the English pack in VisualStudio)
+
+
+## Update the build system
+
+`vcpkg` works using some "baseline".
+From time to time, it's worth updating it with:
+
+```
+vcpkg x-update-baseline
+```
