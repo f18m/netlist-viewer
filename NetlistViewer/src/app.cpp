@@ -38,7 +38,9 @@
 // constants
 // ----------------------------------------------------------------------------
 
-#define SW_VERSION_STR         "0.3"
+#define SW_VERSION_STR         "0.4"
+#define SW_COPYRIGHT_STR       "(C) 2010-2025"
+#define HELP_PAGE              "https://github.com/f18m/netlist-viewer/issues"
 
 // IDs for the controls and the menu commands
 enum
@@ -406,8 +408,6 @@ void SpiceViewerFrame::OnQuit(wxCommandEvent& WXUNUSED(event))
 
 void SpiceViewerFrame::OnHelp(wxCommandEvent& WXUNUSED(event))
 {
-#define HELP_PAGE       "https://sourceforge.net/p/netlistviewer/tickets/"
-
     if (!wxLaunchDefaultBrowser(HELP_PAGE))
         wxLogError("Could not open the URL '%s'... please open it manually.", HELP_PAGE);
 }
@@ -418,7 +418,7 @@ void SpiceViewerFrame::OnAbout(wxCommandEvent& WXUNUSED(event))
     aboutInfo.SetName("Netlist Viewer");
     aboutInfo.SetVersion(SW_VERSION_STR);
     aboutInfo.SetDescription("SPICE netlist viewer. This program converts a SPICE text netlist to a graphical schematic.");
-    aboutInfo.SetCopyright("(C) 2010-2023");
+    aboutInfo.SetCopyright(SW_COPYRIGHT_STR);
     aboutInfo.SetWebSite("https://github.com/f18m/netlist-viewer");
     aboutInfo.AddDeveloper("Francesco Montorsi <francesco.montorsi@gmail.com>");
 

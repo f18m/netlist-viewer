@@ -19,3 +19,4 @@ Then just run
     $ NetlistViewer
 ```
 
+NOTE: these steps are also part of the CI pipeline of the Github project.
