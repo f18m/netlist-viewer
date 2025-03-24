@@ -66,6 +66,7 @@ jobs:
       #     name: NetlistViewer, Windows x86_64
       #     path: NetlistViewer/build/win/x64/Release/
 
+      # snippet of actions taken from https://github.com/NSIS-Dev/ci-examples/blob/main/.github/workflows/windows-latest.yml
       - name: Install NSIS
         run: |
           iwr -useb get.scoop.sh -outfile 'install.ps1'
@@ -77,3 +78,7 @@ jobs:
         run: makensis -VERSION
       - name: Print NSIS compile flags
         run: makensis -HDRINFO
+      - name: Run NSIS
+        run: makensis /V2 setup.nsi
+        working-directory: NetlistViewer/distrib
+
