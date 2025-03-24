@@ -51,20 +51,20 @@ jobs:
       - name: Integrate vcpkg
         run: vcpkg integrate install
 
-      # # this is going to be veeeeeeeeeeery long
-      # - name: Build dependencies
-      #   run: vcpkg install
+      # this is going to be veeeeeeeeeeery long
+      - name: Build dependencies
+        run: vcpkg install
 
-      # # build
-      # - name: Build netlist-viewer
-      #   run: msbuild NetlistViewer\build\win\netlist_viewer_vs2022.vcxproj -t:rebuild -property:Configuration=Release -property:Platform=x64
+      # build
+      - name: Build netlist-viewer
+        run: msbuild NetlistViewer\build\win\netlist_viewer_vs2022.vcxproj -t:rebuild -property:Configuration=Release -property:Platform=x64
 
-      # # save the whole folder containing the binary and DLLs
-      # - name: Save built binaries
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: NetlistViewer, Windows x86_64
-      #     path: NetlistViewer/build/win/x64/Release/
+      # save the whole folder containing the binary and DLLs as workflow artifact
+      - name: Save built binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: NetlistViewer, Windows x86_64
+          path: NetlistViewer/build/win/x64/Release/
 
       # snippet of actions taken from https://github.com/NSIS-Dev/ci-examples/blob/main/.github/workflows/windows-latest.yml
       - name: Install NSIS
@@ -78,7 +78,15 @@ jobs:
         run: makensis -VERSION
       - name: Print NSIS compile flags
         run: makensis -HDRINFO
+
+      # now build the actual Windows installer:
       - name: Run NSIS
         run: makensis /V2 setup.nsi
         working-directory: NetlistViewer/distrib
 
+      # save the whole folder containing the binary and DLLs as workflow artifact
+      - name: Save built installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: NetlistViewer, Windows Installer
+          path: NetlistViewer/distrib/NetlistViewer-*-win-installer.exe

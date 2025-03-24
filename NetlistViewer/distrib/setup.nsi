@@ -29,7 +29,7 @@
 
   ; NOTE: the version should be the same as the one in svn_revision.sh (see the UPP_VERSION #define)
   !define PRODUCT_NAME            "NetlistViewer"
-  !define PRODUCT_VERSION         "0.3"
+  !define PRODUCT_VERSION         "0.4"
   !define PRODUCT_PUBLISHER       "Francesco Montorsi"
   !define INSTALLER_MODE          "release"     ; choose between "debug" and "release"
 
@@ -71,7 +71,7 @@
   VIAddVersionKey "Comments"         ""
   VIAddVersionKey "CompanyName"      "${PRODUCT_NAME} Team"
   VIAddVersionKey "LegalTrademarks"  "Application released under the GNU GPL"
-  VIAddVersionKey "LegalCopyright"   "© ${PRODUCT_NAME} Team"
+  VIAddVersionKey "LegalCopyright"   "ï¿½ ${PRODUCT_NAME} Team"
   VIAddVersionKey "FileDescription"  "Text to schematic conversion of SPICE netlists"
   VIAddVersionKey "FileVersion"      "${PRODUCT_VERSION}"
   VIProductVersion                   "${PRODUCT_VERSION}.0.0" 
