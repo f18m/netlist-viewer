@@ -12,21 +12,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # install deps
-    - uses: actions/checkout@v4
-    - name: install debian-packaged dependencies
-      run: sudo apt install -y libwxgtk3.2-dev libboost-graph1.83.0 libboost-serialization1.83.0 libboost-all-dev
+      # install deps
+      - uses: actions/checkout@v4
+      - name: install debian-packaged dependencies
+        run: sudo apt install -y libwxgtk3.2-dev libboost-graph1.83.0 libboost-serialization1.83.0 libboost-all-dev
 
-    # build
-    - name: build netlist-viewer
-      run: cd NetlistViewer/build/linux && make
+      # build
+      - name: build netlist-viewer
+        run: cd NetlistViewer/build/linux && make
 
-    # save binary
-    - name: Save
-      uses: actions/upload-artifact@v4
-      with:
-        name: NetlistViewer, Linux X86-64
-        path: NetlistViewer/build/linux/NetlistViewer
+      # save binary
+      - name: save built binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: NetlistViewer, Linux x86_64
+          path: NetlistViewer/build/linux/NetlistViewer
 
   WindowsBuild:
     runs-on: windows-latest
@@ -54,3 +54,10 @@ jobs:
       # build
       - name: Build netlist-viewer
         run: msbuild NetlistViewer\build\win\netlist_viewer_vs2022.vcxproj -t:rebuild -property:Configuration=Release -property:Platform=x64
+
+      # save the whole folder containing the binary and DLLs
+      - name: Save built binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: NetlistViewer, Windows x86_64
+          path: NetlistViewer/build/win/x64/Release/
