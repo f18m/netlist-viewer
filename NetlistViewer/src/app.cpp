@@ -42,6 +42,22 @@
 #define SW_COPYRIGHT_STR       "(C) 2010-2025"
 #define HELP_PAGE              "https://github.com/f18m/netlist-viewer/issues"
 
+// file dialog filters
+#define FILTER_NETLISTVIEWERSCHEMATIC_FILES \
+    "NetlistViewer schematic (*.nvs)|*.nvs"
+#define FILTER_SPICENETLIST_FILES \
+    "SPICE netlists (*.net;*.cir;*.ckt)|*.net;*.cir;*.ckt"
+#define FILTER_ALL_FILES \
+    "All files (*.*)|*.*"
+
+#define FILTER_SPICENETLIST \
+    FILTER_SPICENETLIST_FILES "|" \
+    FILTER_ALL_FILES
+
+#define FILTER_NETLISTVIEWERSCHEMATIC \
+    FILTER_NETLISTVIEWERSCHEMATIC_FILES "|" \
+    FILTER_ALL_FILES
+
 // IDs for the controls and the menu commands
 enum
 {
@@ -297,7 +313,7 @@ void SpiceViewerFrame::OnOpenNetlist(wxCommandEvent& WXUNUSED(event))
     wxString defaultPath = wxFileName(wxStandardPaths::Get().GetExecutablePath()).GetPath();
     wxFileDialog 
         openFileDialog(this, "Open SPICE netlist", defaultPath, "",
-                       "SPICE netlists (*.net;*.cir;*.ckt)|*.net;*.cir;*.ckt", wxFD_OPEN|wxFD_FILE_MUST_EXIST);
+                       FILTER_SPICENETLIST, wxFD_OPEN|wxFD_FILE_MUST_EXIST);
 
     if (openFileDialog.ShowModal() == wxID_CANCEL)
         return;     // the user changed idea...
@@ -335,7 +351,7 @@ void SpiceViewerFrame::OnOpenNVS(wxCommandEvent& WXUNUSED(event))
     wxString defaultPath = wxFileName(wxStandardPaths::Get().GetExecutablePath()).GetPath();
     wxFileDialog 
         openFileDialog(this, "Open NetlistViewer schematic", defaultPath, "",
-                       "NetlistViewer schematic (*.nvs)|*.nvs", wxFD_OPEN|wxFD_FILE_MUST_EXIST);
+                       FILTER_NETLISTVIEWERSCHEMATIC, wxFD_OPEN|wxFD_FILE_MUST_EXIST);
 
     if (openFileDialog.ShowModal() == wxID_CANCEL)
         return;     // the user changed idea...
