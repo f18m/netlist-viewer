@@ -17,7 +17,7 @@ jobs:
 
     steps:
       # install deps
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: install debian-packaged dependencies
         run: sudo apt install -y libwxgtk3.2-dev libboost-graph1.83.0 libboost-serialization1.83.0 libboost-all-dev
 
@@ -36,7 +36,7 @@ jobs:
   WindowsBuild:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Add msbuild to PATH
         uses: microsoft/setup-msbuild@v2
       
