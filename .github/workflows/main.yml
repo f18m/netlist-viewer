@@ -69,13 +69,15 @@ jobs:
           if-no-files-found: error
 
       # snippet of actions taken from https://github.com/NSIS-Dev/ci-examples/blob/main/.github/workflows/windows-latest.yml
+      # this will use "iwr" (Invoke Web Request) to install Scoop (https://scoop.sh/)
+      # and then will use Scoop to install NSIS
       - name: Install NSIS
         run: |
           iwr -useb get.scoop.sh -outfile 'install.ps1'
           .\install.ps1 -RunAsAdmin
           scoop update
           scoop bucket add extras
-          scoop install nsis
+          scoop install nsis@3.11
       - name: Print NSIS version
         run: makensis -VERSION
       - name: Print NSIS compile flags

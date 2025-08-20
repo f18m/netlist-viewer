@@ -3,7 +3,6 @@
 // Purpose:     supported SPICE devices
 // Author:      Francesco Montorsi
 // Created:     Oct 2017
-// RCS-ID:      $Id: netlist.h 32 2017-10-14 09:24:41Z frm $
 // Copyright:   (c) 2010 Francesco Montorsi
 // Licence:     GPL licence
 /////////////////////////////////////////////////////////////////////////////

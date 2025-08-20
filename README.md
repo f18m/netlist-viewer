@@ -29,6 +29,16 @@ D1 OUT 0 DIODEstd
 
 You can download binaries from [Github releases](https://github.com/f18m/netlist-viewer/releases).
 These binaries are not garantueed to work on your system. 
+
+## Windows
+
+Note that if NetListViewer fails to start after installing with the Windows Installer and complains
+about DLL dependencies named `VCRUNTIME<something>.dll`, it means that your Windows installation
+is lacking the VC++ redistributable package.
+You can install the latest VC Redistributable package following [https://vcredist.com/quick/](https://vcredist.com/quick/).
+
+## Linux
+
 A better way to distribute applications for Linux would be using [Flatpak](https://github.com/f18m/netlist-viewer/issues/6).
 If you are interested in such work, please open an issue/PR.
 
