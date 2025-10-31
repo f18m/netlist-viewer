@@ -1,0 +1,40 @@
+id: org.flatpak.netlist-viewer
+runtime: org.freedesktop.Platform
+runtime-version: '23.08'
+sdk: org.freedesktop.Sdk
+command: NetlistViewer
+modules:
+  - "boost.json"
+  - name: wxwidgets
+    rm-configure: true
+    config-opts:
+      - --with-libpng
+      - --with-zlib
+      - --with-cxx=14
+      - --disable-sdltest
+      - --disable-webview
+      - --disable-webviewwebkit
+      - --disable-ribbon
+      - --disable-propgrid
+      - --disable-richtext
+      - --with-expat=builtin
+      - --with-libiconv=/usr
+    sources:
+      - type: archive
+        url: https://github.com/wxWidgets/wxWidgets/releases/download/v3.2.2.1/wxWidgets-3.2.2.1.tar.bz2
+        sha256: dffcb6be71296fff4b7f8840eb1b510178f57aa2eb236b20da41182009242c02
+        x-checker-data:
+          type: anitya
+          project-id: 5150
+          stable-only: true
+          url-template: https://github.com/wxWidgets/wxWidgets/releases/download/v/wxWidgets-.tar.bz2
+
+  - name: netlist_viewer
+    buildsystem: simple
+    make-install-args:
+      - PREFIX=/app
+    sources:
+      - type: git
+        url: https://github.com/f18m/large-pcap-analyzer.git
+        commit: 9dd3e049176ad8cc483c17946b42aaac904946a0
+        tag: 3.8.2

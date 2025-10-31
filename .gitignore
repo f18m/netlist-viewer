@@ -5,3 +5,6 @@ NetlistViewer/build/win/.vs
 NetlistViewer/build/win/*.pdb
 NetlistViewer/distrib/*.exe
 vcpkg_installed/
+
+.flatpak-builder/
+repo/
