@@ -40,29 +40,25 @@ jobs:
       - name: Add msbuild to PATH
         uses: microsoft/setup-msbuild@v2
       
-      # # setup vcpkg & msbuild tools
-      # # NOTE: no packages/dependencies are installed at this time -- msbuild will use vcpkg to download&build dependencies
-      # #       specified in the vcpkg.json during the build step below. This happens because the VisualStudio solution has
-      # #       the 'VcpkgEnableManifest' property set to True
-      # - name: Setup a new (or from cache) vcpkg (and does not build any package)
-      #   uses: lukka/run-vcpkg@v11.5
-      #   with:
-      #     # as suggested, we pin the version of "vcpkg" to a specific hash (23rd March 2025) to ensure reproducible builds
-      #     vcpkgGitCommitId: a76b33254af4092ff45f08ec5adcd9fd06468b43
-      # - name: Integrate vcpkg
-      #   run: vcpkg integrate install
+      # setup vcpkg & msbuild tools
+      # NOTE: no packages/dependencies are installed at this time -- msbuild will use vcpkg to download&build dependencies
+      #       specified in the vcpkg.json during the build step below. This happens because the VisualStudio solution has
+      #       the 'VcpkgEnableManifest' property set to True
+      - name: Setup a new (or from cache) vcpkg (and does not build any package)
+        uses: lukka/run-vcpkg@v11.5
+        with:
+          # as suggested, we pin the version of "vcpkg" to a specific hash (23rd March 2025) to ensure reproducible builds
+          vcpkgGitCommitId: a76b33254af4092ff45f08ec5adcd9fd06468b43
+      - name: Integrate vcpkg
+        run: vcpkg integrate install
 
-      # # this is going to be veeeeeeeeeeery long
-      # - name: Build dependencies
-      #   run: vcpkg install
+      # this is going to be veeeeeeeeeeery long
+      - name: Build dependencies
+        run: vcpkg install
 
-      # # build
-      # - name: Build netlist-viewer
-      #   run: msbuild NetlistViewer\build\win\netlist_viewer_vs2022.vcxproj -t:rebuild -property:Configuration=Release -property:Platform=x64
-      - name: test
-        run: |
-          mkdir NetlistViewer\build\win\x64\Release -Force
-          echo hello world > NetlistViewer\build\win\x64\Release\netlist_viewer.exe
+      # build
+      - name: Build netlist-viewer
+        run: msbuild NetlistViewer\build\win\netlist_viewer_vs2022.vcxproj -t:rebuild -property:Configuration=Release -property:Platform=x64
 
       # save the whole folder containing the binary and DLLs as workflow artifact
       - name: Save built binaries
@@ -77,26 +73,15 @@ jobs:
     needs: WindowsBuild
     steps:
       - uses: actions/checkout@v5
-
       - uses: actions/download-artifact@v5
         with:
           name: NetlistViewer_Windows_x86_64
           path: .\NetlistViewer\build\win\x64\Release\
-
-
       - name: Display structure of downloaded files
         run: ls -R
       
-      # snippet of actions taken from https://github.com/NSIS-Dev/ci-examples/blob/main/.github/workflows/windows-latest.yml
-      # see also https://scoop.sh/
-      # - name: Install NSIS
-      #   run: |
-      #     iwr -useb get.scoop.sh -outfile 'install.ps1'
-      #     .\install.ps1 -RunAsAdmin
-      #     scoop update
-      #     scoop bucket add extras
-      #     scoop install nsis@3.11
-
+      # Install Scoop
+      # see https://scoop.sh/
       - uses: MinoruSekine/setup-scoop@v4.0.2
         with:
           buckets: extras
