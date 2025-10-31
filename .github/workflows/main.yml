@@ -78,13 +78,20 @@ jobs:
 
       # snippet of actions taken from https://github.com/NSIS-Dev/ci-examples/blob/main/.github/workflows/windows-latest.yml
       # see also https://scoop.sh/
-      - name: Install NSIS
-        run: |
-          iwr -useb get.scoop.sh -outfile 'install.ps1'
-          .\install.ps1 -RunAsAdmin
-          scoop update
-          scoop bucket add extras
-          scoop install nsis
+      # - name: Install NSIS
+      #   run: |
+      #     iwr -useb get.scoop.sh -outfile 'install.ps1'
+      #     .\install.ps1 -RunAsAdmin
+      #     scoop update
+      #     scoop bucket add extras
+      #     scoop install nsis@3.11
+
+      - uses: MinoruSekine/setup-scoop@v4.0.2
+        with:
+          buckets: extras
+          apps: nsis@3.11
+
+
       - name: Print NSIS version
         run: makensis -VERSION
       - name: Print NSIS compile flags
