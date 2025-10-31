@@ -62,7 +62,7 @@ jobs:
 
       # save the whole folder containing the binary and DLLs as workflow artifact
       - name: Save built binaries
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: NetlistViewer_Windows_x86_64
           path: NetlistViewer/build/win/x64/Release/
@@ -73,7 +73,7 @@ jobs:
     needs: WindowsBuild
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/download-artifact@v5
+      - uses: actions/download-artifact@v6
         with:
           name: NetlistViewer_Windows_x86_64
           path: .\NetlistViewer\build\win\x64\Release\
@@ -99,7 +99,7 @@ jobs:
 
       # save the whole folder containing the binary and DLLs as workflow artifact
       - name: Save built installer
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: NetlistViewer, Windows Installer
           path: NetlistViewer/distrib/NetlistViewer-*-win-installer.exe
