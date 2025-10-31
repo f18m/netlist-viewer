@@ -12,63 +12,72 @@ on:
     - cron: '0 0 1 * *'
 
 jobs:
-  LinuxBuild:
-    runs-on: ubuntu-latest
+  # LinuxBuild:
+  #   runs-on: ubuntu-latest
 
-    steps:
-      # install deps
-      - uses: actions/checkout@v5
-      - name: install debian-packaged dependencies
-        run: sudo apt install -y libwxgtk3.2-dev libboost-graph1.83.0 libboost-serialization1.83.0 libboost-all-dev
+  #   steps:
+  #     # install deps
+  #     - uses: actions/checkout@v5
+  #     - name: install debian-packaged dependencies
+  #       run: sudo apt install -y libwxgtk3.2-dev libboost-graph1.83.0 libboost-serialization1.83.0 libboost-all-dev
 
-      # build
-      - name: build netlist-viewer
-        run: cd NetlistViewer/build/linux && make
+  #     # build
+  #     - name: build netlist-viewer
+  #       run: cd NetlistViewer/build/linux && make
 
-      # save binary
-      - name: save built binary
-        uses: actions/upload-artifact@v4
-        with:
-          name: NetlistViewer, Linux x86_64
-          path: NetlistViewer/build/linux/NetlistViewer
-          if-no-files-found: error
+  #     # save binary
+  #     - name: save built binary
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: NetlistViewer, Linux x86_64
+  #         path: NetlistViewer/build/linux/NetlistViewer
+  #         if-no-files-found: error
 
-  WindowsBuild:
+  # WindowsBuild:
+  #   runs-on: windows-latest
+  #   steps:
+  #     - uses: actions/checkout@v5
+  #     - name: Add msbuild to PATH
+  #       uses: microsoft/setup-msbuild@v2
+      
+  #     # setup vcpkg & msbuild tools
+  #     # NOTE: no packages/dependencies are installed at this time -- msbuild will use vcpkg to download&build dependencies
+  #     #       specified in the vcpkg.json during the build step below. This happens because the VisualStudio solution has
+  #     #       the 'VcpkgEnableManifest' property set to True
+  #     - name: Setup a new (or from cache) vcpkg (and does not build any package)
+  #       uses: lukka/run-vcpkg@v11.5
+  #       with:
+  #         # as suggested, we pin the version of "vcpkg" to a specific hash (23rd March 2025) to ensure reproducible builds
+  #         vcpkgGitCommitId: a76b33254af4092ff45f08ec5adcd9fd06468b43
+  #     - name: Integrate vcpkg
+  #       run: vcpkg integrate install
+
+  #     # this is going to be veeeeeeeeeeery long
+  #     - name: Build dependencies
+  #       run: vcpkg install
+
+  #     # build
+  #     - name: Build netlist-viewer
+  #       run: msbuild NetlistViewer\build\win\netlist_viewer_vs2022.vcxproj -t:rebuild -property:Configuration=Release -property:Platform=x64
+
+  #     # save the whole folder containing the binary and DLLs as workflow artifact
+  #     - name: Save built binaries
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: NetlistViewer, Windows x86_64
+  #         path: NetlistViewer/build/win/x64/Release/
+  #         if-no-files-found: error
+
+  WindowsInstaller:
     runs-on: windows-latest
+    #needs: WindowsBuild ## speedup
     steps:
       - uses: actions/checkout@v5
       - name: Add msbuild to PATH
         uses: microsoft/setup-msbuild@v2
-      
-      # setup vcpkg & msbuild tools
-      # NOTE: no packages/dependencies are installed at this time -- msbuild will use vcpkg to download&build dependencies
-      #       specified in the vcpkg.json during the build step below. This happens because the VisualStudio solution has
-      #       the 'VcpkgEnableManifest' property set to True
-      - name: Setup a new (or from cache) vcpkg (and does not build any package)
-        uses: lukka/run-vcpkg@v11.5
-        with:
-          # as suggested, we pin the version of "vcpkg" to a specific hash (23rd March 2025) to ensure reproducible builds
-          vcpkgGitCommitId: a76b33254af4092ff45f08ec5adcd9fd06468b43
-      - name: Integrate vcpkg
-        run: vcpkg integrate install
-
-      # this is going to be veeeeeeeeeeery long
-      - name: Build dependencies
-        run: vcpkg install
-
-      # build
-      - name: Build netlist-viewer
-        run: msbuild NetlistViewer\build\win\netlist_viewer_vs2022.vcxproj -t:rebuild -property:Configuration=Release -property:Platform=x64
-
-      # save the whole folder containing the binary and DLLs as workflow artifact
-      - name: Save built binaries
-        uses: actions/upload-artifact@v4
-        with:
-          name: NetlistViewer, Windows x86_64
-          path: NetlistViewer/build/win/x64/Release/
-          if-no-files-found: error
 
       # snippet of actions taken from https://github.com/NSIS-Dev/ci-examples/blob/main/.github/workflows/windows-latest.yml
+      # see also https://scoop.sh/
       - name: Install NSIS
         run: |
           iwr -useb get.scoop.sh -outfile 'install.ps1'
