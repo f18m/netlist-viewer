@@ -12,26 +12,26 @@ on:
     - cron: '0 0 1 * *'
 
 jobs:
-  LinuxBuild:
-    runs-on: ubuntu-latest
+  # LinuxBuild:
+  #   runs-on: ubuntu-latest
 
-    steps:
-      # install deps
-      - uses: actions/checkout@v5
-      - name: install debian-packaged dependencies
-        run: sudo apt install -y libwxgtk3.2-dev libboost-graph1.83.0 libboost-serialization1.83.0 libboost-all-dev
+  #   steps:
+  #     # install deps
+  #     - uses: actions/checkout@v5
+  #     - name: install debian-packaged dependencies
+  #       run: sudo apt install -y libwxgtk3.2-dev libboost-graph1.83.0 libboost-serialization1.83.0 libboost-all-dev
 
-      # build
-      - name: build netlist-viewer
-        run: cd NetlistViewer/build/linux && make
+  #     # build
+  #     - name: build netlist-viewer
+  #       run: cd NetlistViewer/build/linux && make
 
-      # save binary
-      - name: save built binary
-        uses: actions/upload-artifact@v4
-        with:
-          name: NetlistViewer, Linux x86_64
-          path: NetlistViewer/build/linux/NetlistViewer
-          if-no-files-found: error
+  #     # save binary
+  #     - name: save built binary
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: NetlistViewer, Linux x86_64
+  #         path: NetlistViewer/build/linux/NetlistViewer
+  #         if-no-files-found: error
 
   WindowsBuild:
     runs-on: windows-latest
@@ -64,18 +64,29 @@ jobs:
       - name: Save built binaries
         uses: actions/upload-artifact@v4
         with:
-          name: NetlistViewer, Windows x86_64
+          name: NetlistViewer_Windows_x86_64
           path: NetlistViewer/build/win/x64/Release/
           if-no-files-found: error
 
-      # snippet of actions taken from https://github.com/NSIS-Dev/ci-examples/blob/main/.github/workflows/windows-latest.yml
-      - name: Install NSIS
-        run: |
-          iwr -useb get.scoop.sh -outfile 'install.ps1'
-          .\install.ps1 -RunAsAdmin
-          scoop update
-          scoop bucket add extras
-          scoop install nsis
+  WindowsInstaller:
+    runs-on: windows-latest
+    needs: WindowsBuild
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v5
+        with:
+          name: NetlistViewer_Windows_x86_64
+          path: .\NetlistViewer\build\win\x64\Release\
+      - name: Display structure of downloaded files
+        run: ls -R
+      
+      # Install Scoop
+      # see https://scoop.sh/
+      - uses: MinoruSekine/setup-scoop@v4.0.2
+        with:
+          buckets: extras
+          apps: nsis@3.11
+
       - name: Print NSIS version
         run: makensis -VERSION
       - name: Print NSIS compile flags
