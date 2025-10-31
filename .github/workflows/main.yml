@@ -81,6 +81,9 @@ jobs:
       - uses: actions/download-artifact@v5
         with:
           name: NetlistViewer_Windows_x86_64
+          path: .\build\win\x64\Release\
+
+
       - name: Display structure of downloaded files
         run: ls -R
       
