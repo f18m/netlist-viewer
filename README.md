@@ -1,3 +1,5 @@
+> :warning: **This project is looking for maintainers / developers. The original author is not using this since a long time and is just doing some basic maintainance. The software still needs quite a bit of work to get into a truly usable status. Please consider contributing if you find this software useful. Thanks.**
+
 # Netlist Viewer
 
 Netlist Viewer is a tool capable of loading SPICE netlists and convert them in a schematic (i.e. graphical) format.
