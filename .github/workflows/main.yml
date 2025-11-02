@@ -33,6 +33,29 @@ jobs:
           path: NetlistViewer/build/linux/NetlistViewer
           if-no-files-found: error
 
+  MacOSBuild:
+    runs-on: macos-latest
+
+    steps:
+      # install deps
+      - uses: actions/checkout@v5
+      - name: install dependencies via brew
+        run: |
+          brew update
+          brew install wxwidgets boost
+
+      # build
+      - name: build netlist-viewer
+        run: cd NetlistViewer/build/macos && make
+
+      # save binary
+      - name: save built binary
+        uses: actions/upload-artifact@v5
+        with:
+          name: NetlistViewer, macOS x86_64
+          path: NetlistViewer/build/macos/NetlistViewer
+          if-no-files-found: error
+
   WindowsBuild:
     runs-on: windows-latest
     steps:
