@@ -12,26 +12,26 @@ on:
     - cron: '0 0 1 * *'
 
 jobs:
-  # LinuxBuild:
-  #   runs-on: ubuntu-latest
+  LinuxBuild:
+    runs-on: ubuntu-latest
 
-  #   steps:
-  #     # install deps
-  #     - uses: actions/checkout@v5
-  #     - name: install debian-packaged dependencies
-  #       run: sudo apt install -y libwxgtk3.2-dev libboost-graph1.83.0 libboost-serialization1.83.0 libboost-all-dev
+    steps:
+      # install deps
+      - uses: actions/checkout@v5
+      - name: install debian-packaged dependencies
+        run: sudo apt install -y libwxgtk3.2-dev libboost-graph1.83.0 libboost-serialization1.83.0 libboost-all-dev
 
-  #     # build
-  #     - name: build netlist-viewer
-  #       run: cd NetlistViewer/build/linux && make
+      # build
+      - name: build netlist-viewer
+        run: cd NetlistViewer/build/linux && make
 
-  #     # save binary
-  #     - name: save built binary
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: NetlistViewer, Linux x86_64
-  #         path: NetlistViewer/build/linux/NetlistViewer
-  #         if-no-files-found: error
+      # save binary
+      - name: save built binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: NetlistViewer, Linux x86_64
+          path: NetlistViewer/build/linux/NetlistViewer
+          if-no-files-found: error
 
   WindowsBuild:
     runs-on: windows-latest

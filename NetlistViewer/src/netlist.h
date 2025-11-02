@@ -3,7 +3,6 @@
 // Purpose:     SPICE netlist parsing & processing
 // Author:      Francesco Montorsi
 // Created:     30/05/2010
-// RCS-ID:      $Id$
 // Copyright:   (c) 2010 Francesco Montorsi
 // Licence:     GPL licence
 /////////////////////////////////////////////////////////////////////////////
