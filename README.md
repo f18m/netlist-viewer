@@ -50,7 +50,13 @@ All new developments have been moved into this Github project.
 # How to build from sources
 
 NetListViewer is a pretty simple application with 2 main dependencies: [wxWidgets](https://www.wxwidgets.org/) and [Boost](https://www.boost.org/).
-Some simple notes on how to build NetListViewer for [Windows](NetlistViewer/build/win/README.md) and for [Linux](NetlistViewer/build/linux/README.md) are available.
+Some simple notes on how to build NetListViewer for:
+
+* [Windows](NetlistViewer/build/win/README.md) 
+* [Linux](NetlistViewer/build/linux/README.md) 
+* [MacOS](NetlistViewer/build/macos/README.md)
+
+are available.
 
 # Status
 
