@@ -27,7 +27,7 @@ jobs:
 
       # save binary
       - name: save built binary
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: NetlistViewer, Linux x86_64
           path: NetlistViewer/build/linux/NetlistViewer
