@@ -27,7 +27,7 @@ jobs:
 
       # save binary
       - name: save built binary
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: NetlistViewer, Linux x86_64
           path: NetlistViewer/build/linux/NetlistViewer
@@ -50,7 +50,7 @@ jobs:
 
       # save binary
       - name: save built binary
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: NetlistViewer, macOS x86_64
           path: NetlistViewer/build/macos/NetlistViewer
@@ -85,7 +85,7 @@ jobs:
 
       # save the whole folder containing the binary and DLLs as workflow artifact
       - name: Save built binaries
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: NetlistViewer_Windows_x86_64
           path: NetlistViewer/build/win/x64/Release/
@@ -96,7 +96,7 @@ jobs:
     needs: WindowsBuild
     steps:
       - uses: actions/checkout@v5
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@v7
         with:
           name: NetlistViewer_Windows_x86_64
           path: .\NetlistViewer\build\win\x64\Release\
@@ -122,7 +122,7 @@ jobs:
 
       # save the whole folder containing the binary and DLLs as workflow artifact
       - name: Save built installer
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: NetlistViewer, Windows Installer
           path: NetlistViewer/distrib/NetlistViewer-*-win-installer.exe
