@@ -40,7 +40,8 @@ BOOST_LDFLAGS := $(addprefix -lboost_,$(BOOST_MODULES_LIBS))
 COMPILER_PREFIX=gcc
 WX_CONFIG_FLAGS=
 # SPICE_VIEWER_CXXFLAGS = -std=c++11 -W -Wall -Isrc `$(WX_CONFIG) --cxxflags $(WX_CONFIG_FLAGS)` $(CXXFLAGS) $(BOOST_CXXFLAGS)
-BOOST_INCLUDE_PATH = -I/opt/homebrew/Cellar/boost/1.89.0/include/
+
+BOOST_INCLUDE_PATH = -I $(shell brew --prefix)/include/boost
 SPICE_VIEWER_CXXFLAGS = -std=c++14 -W -Wall -Isrc $(BOOST_INCLUDE_PATH) `$(WX_CONFIG) --cxxflags $(WX_CONFIG_FLAGS)` $(CXXFLAGS) $(BOOST_CXXFLAGS)
 
 SPICE_VIEWER_LDDFLAGS = $(LDFLAGS) $(BOOST_LDFLAGS) `$(WX_CONFIG) $(WX_CONFIG_FLAGS) --libs adv,core,base`
