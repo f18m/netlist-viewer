@@ -61,7 +61,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Add msbuild to PATH
-        uses: microsoft/setup-msbuild@v2
+        uses: microsoft/setup-msbuild@v3
       
       # setup vcpkg & msbuild tools
       # NOTE: no packages/dependencies are installed at this time -- msbuild will use vcpkg to download&build dependencies
