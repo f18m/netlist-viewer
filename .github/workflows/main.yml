@@ -68,7 +68,7 @@ jobs:
       #       specified in the vcpkg.json during the build step below. This happens because the VisualStudio solution has
       #       the 'VcpkgEnableManifest' property set to True
       - name: Setup a new (or from cache) vcpkg (and does not build any package)
-        uses: lukka/run-vcpkg@v11.5
+        uses: lukka/run-vcpkg@v11.6
         with:
           # as suggested, we pin the version of "vcpkg" to a specific hash (23rd March 2025) to ensure reproducible builds
           vcpkgGitCommitId: a76b33254af4092ff45f08ec5adcd9fd06468b43
