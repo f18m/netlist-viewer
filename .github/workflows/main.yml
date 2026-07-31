@@ -105,7 +105,7 @@ jobs:
       
       # Install Scoop
       # see https://scoop.sh/
-      - uses: MinoruSekine/setup-scoop@v4.0.2
+      - uses: MinoruSekine/setup-scoop@v5.0.1
         with:
           buckets: extras
           apps: nsis@3.11
